@@ -12,6 +12,9 @@ namespace mpcomplete.Stardew.QuickCraft.Framework
         {
             [JsonConverter(typeof(StringEnumArrayConverter))]
             public SButton[] HoldToActivate { get; set; } = { SButton.LeftControl };
+
+            [JsonConverter(typeof(StringEnumArrayConverter))]
+            public SButton[] HoldFor5x { get; set; } = { SButton.LeftShift };
         }
     }
 }
