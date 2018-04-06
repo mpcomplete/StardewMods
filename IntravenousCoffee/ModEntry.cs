@@ -15,7 +15,7 @@ namespace IntravenousCoffee
 {
     public class IntravenousCoffeeMod : Mod
     {
-        const int kCoffeeDurationMillis = 2 * 60 * 1000;  // 2 min
+        const int kCoffeeDurationMillis = (1*60 + 23) * 1000;  // 1:23 min
         const int kWithdrawalDurationMillis = 2 * 60 * 60 * 1000; // 2 hours
         const int kBuffWhich = 998;
 
@@ -65,38 +65,34 @@ namespace IntravenousCoffee
                 return;
             updateTicks = 60;
 
-            RemoveDrinkBuff(true);
+            removeDrinkBuff(true);
 
             // Wait till the buff runs out.
             if (Game1.buffsDisplay.hasBuff(kBuffWhich))
                 return;
 
             // Find an IV bag with coffee remaining.
-            IntravenousCoffeeTool ivTool = null;
-            foreach (Item item in Game1.player.items) {
-                ivTool = item as IntravenousCoffeeTool;
-                if (ivTool?.attachments[0]?.stack > 0)
-                    break;
-            }
+            IntravenousCoffeeTool ivTool = Game1.player.items.Find(
+                (i) => (i is IntravenousCoffeeTool iv && iv.hasCoffee()))
+                as IntravenousCoffeeTool;
 
             if (ivTool != null) {
                 // Consume some coffee.
-                AddBuff(1, kCoffeeDurationMillis, "+1 Speed", "Coffee Drip");
-                if (--ivTool.attachments[0].stack == 0)
-                    ivTool.attachments[0] = null;
+                ivTool.consume();
+                addBuff(1, kCoffeeDurationMillis, "+1 Speed", "Coffee Drip");
                 this.addiction = AddictionState.Addicted;  // caffeine's a hell of a drug
-                RemoveDrinkBuff(false);
+                removeDrinkBuff(false);
             } else if (this.addiction == AddictionState.Addicted) {
                 // Ran out of coffee. Go into withdrawal.
-                AddBuff(-1, kWithdrawalDurationMillis, "-1 Speed", "Coffee Withdrawal");
-                this.addiction = AddictionState.Withdrawal;  // caffeine's a hell of a drug
+                addBuff(-1, kWithdrawalDurationMillis, "-1 Speed", "Coffee Withdrawal");
+                this.addiction = AddictionState.Withdrawal;
             } else if (this.addiction == AddictionState.Withdrawal) {
-                // We made it out of withdrawal.
+                // Withdrawal buff wore off (also happens when player sleeps). We made it.
                 this.addiction = AddictionState.Clean;
             }
         }
 
-        private void AddBuff(int amount, int millisecondsDuration, string description, string source) {
+        private void addBuff(int amount, int millisecondsDuration, string description, string source) {
             if (Game1.buffsDisplay.hasBuff(kBuffWhich))
                 return;
 
@@ -113,7 +109,7 @@ namespace IntravenousCoffee
             Game1.buffsDisplay.addOtherBuff(buff);
         }
 
-        private void RemoveDrinkBuff(bool warn)
+        private void removeDrinkBuff(bool warn)
         {
             if (this.addiction != AddictionState.Clean && Game1.buffsDisplay.drink?.source == "Coffee") {
                 Game1.buffsDisplay.drink.millisecondsDuration = 1;

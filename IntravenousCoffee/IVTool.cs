@@ -102,13 +102,24 @@ namespace IntravenousCoffee
 
             numAttachmentSlots = 1;
             attachments = new SObject[numAttachmentSlots];
-            initialParentTileIndex = 77;
-            currentParentTileIndex = 77;
+            initialParentTileIndex = 99;
+            currentParentTileIndex = 99;
             indexOfMenuItemView = 0;
             upgradeLevel = 5;
            
             instantUse = false;
             inUse = false;
+        }
+
+        public bool hasCoffee()
+        {
+            return this.attachments[0]?.stack > 0;
+        }
+
+        public void consume()
+        {
+            if (--this.attachments[0].stack == 0)
+                this.attachments[0] = null;
         }
 
         public override int attachmentSlots()
