@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-
 using StardewValley;
-using StardewValley.Tools;
-using StardewValley.TerrainFeatures;
-
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
 using StardewValley.Objects;
@@ -17,11 +12,8 @@ namespace IntravenousCoffee
 {
     public class IntravenousCoffeeTool : Tool, ISaveElement
     {
-
         internal static Texture2D texture;
         private static Texture2D attTexture;
-        private bool inUse;
-        private IMonitor Monitor;
 
         public Dictionary<string, string> getAdditionalSaveData()
         {
@@ -33,12 +25,11 @@ namespace IntravenousCoffee
         public dynamic getReplacement()
         {
             Chest replacement = new Chest(true);
-            if(attachments.Count() > 0)
-            {
-                if(attachments[0] != null)
+            if (attachments.Count() > 0) {
+                if (attachments[0] != null)
                     replacement.addItem(attachments[0]);
             }
-            
+
             return replacement;
         }
 
@@ -47,21 +38,12 @@ namespace IntravenousCoffee
             build();
             Chest chest = (Chest)replacement;
             if (!chest.isEmpty()) {
-                    attachments[0] = (SObject)chest.items[0];
+                attachments[0] = (SObject)chest.items[0];
             }
-            
         }
 
-        public IntravenousCoffeeTool()
-            : base()
+        public IntravenousCoffeeTool() : base()
         {
-            build();
-        }
-
-        public IntravenousCoffeeTool(IMonitor monitor)
-            :base()
-        {
-            this.Monitor = monitor;
             build();
         }
 
@@ -75,13 +57,6 @@ namespace IntravenousCoffee
             return true;
         }
 
-        internal static void loadTextures()
-        {
-            texture = IntravenousCoffeeMod._helper.Content.Load<Texture2D>(@"Assets/ivbag.png");
-            attTexture = IntravenousCoffeeMod._helper.Content.Load<Texture2D>(@"Assets/attachment.png");
-        }
-
-
         public override bool actionWhenPurchased()
         {
             return true;
@@ -89,7 +64,13 @@ namespace IntravenousCoffee
 
         public override Item getOne()
         {
-            return new IntravenousCoffeeTool(this.Monitor);
+            return new IntravenousCoffeeTool();
+        }
+
+        internal static void loadTextures()
+        {
+            texture = IntravenousCoffeeMod._helper.Content.Load<Texture2D>(@"Assets/ivbag.png");
+            attTexture = IntravenousCoffeeMod._helper.Content.Load<Texture2D>(@"Assets/attachment.png");
         }
 
         private void build()
@@ -98,7 +79,7 @@ namespace IntravenousCoffee
                 loadTextures();
 
             name = "IV bag";
-            description = "Empty";
+            description = "Fill it with coffee to constantly inject that sweet caffeine directly into your veins. Be careful, it's addictive!";
 
             numAttachmentSlots = 1;
             attachments = new SObject[numAttachmentSlots];
@@ -106,9 +87,7 @@ namespace IntravenousCoffee
             currentParentTileIndex = 99;
             indexOfMenuItemView = 0;
             upgradeLevel = 5;
-           
             instantUse = false;
-            inUse = false;
         }
 
         public bool hasCoffee()
@@ -116,7 +95,7 @@ namespace IntravenousCoffee
             return this.attachments[0]?.stack > 0;
         }
 
-        public void consume()
+        public void consumeCoffee()
         {
             if (--this.attachments[0].stack == 0)
                 this.attachments[0] = null;
@@ -196,27 +175,8 @@ namespace IntravenousCoffee
        
         public override string getDescription()
         {
-            if (attachments.Count() > 0)
-            {
-                if(attachments[0] != null)
-                {
-                    return attachments[0].name;
-                }
-
-                string text = description;
-                SpriteFont smallFont = Game1.smallFont;
-                int width = Game1.tileSize * 4 + Game1.tileSize / 4;
-                return Game1.parseText(text, smallFont, width);
-            }
-            else
-            {
-                string text = description;
-                SpriteFont smallFont = Game1.smallFont;
-                int width = Game1.tileSize * 4 + Game1.tileSize / 4;
-                return Game1.parseText(text, smallFont, width);
-            }
-           
-
+            int width = Game1.tileSize * 4 + Game1.tileSize / 4;
+            return Game1.parseText(description, Game1.smallFont, width);
         }
 
         protected override string loadDisplayName()

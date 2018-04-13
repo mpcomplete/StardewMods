@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
-
 using StardewValley.Menus;
 using PyTK.Types;
 using PyTK.Extensions;
@@ -37,7 +34,13 @@ namespace IntravenousCoffee
         {
             _helper = helper;
             _monitor = Monitor;
-            addtoshop = new InventoryItem(new IntravenousCoffeeTool(), 10000, 1).addToNPCShop("Pierre");
+
+            // Add it to the Hospital shop.
+            addtoshop = new InventoryItem(new IntravenousCoffeeTool(), 10000, 1).addToShop(
+                (ShopMenu shop) => shop.getForSale().Exists(
+                    (Item item) => item.Name == "Energy Tonic" || item.Name == "Muscle Remedy"
+                )
+            );
 
             InputEvents.ButtonPressed += this.InputEvents_ButtonPressed;
             GameEvents.UpdateTick += this.GameEvents_UpdateTick;
@@ -78,7 +81,7 @@ namespace IntravenousCoffee
 
             if (ivTool != null) {
                 // Consume some coffee.
-                ivTool.consume();
+                ivTool.consumeCoffee();
                 addBuff(1, kCoffeeDurationMillis, "+1 Speed", "Coffee Drip");
                 this.addiction = AddictionState.Addicted;  // caffeine's a hell of a drug
                 removeDrinkBuff(false);

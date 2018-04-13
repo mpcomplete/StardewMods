@@ -12,7 +12,7 @@ using Microsoft.Xna.Framework;
 
 namespace mpcomplete.Stardew.QuickCraft
 {
-    internal class ModEntry : Mod
+    internal class QuickCraftMod : Mod
     {
         private ModConfig Config;
  
