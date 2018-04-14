@@ -9,52 +9,70 @@ using PyTK.Extensions;
 
 namespace Tubes
 {
-    // Static info for our Tube object / terrain feature.
-    public class TubeInfo
+    public class Blueprint
     {
-        public const string fullid = "Pneumatic Tube";
-        public const string name = "Pneumatic Tube";
-        public const string category = "Crafting";
-        public const int price = 100;
-        public const string description = "Connects machines together with the magic of vacuums.";
-        public const string crafting = "337 1";
-        public const int spriteSize = 48;
+        public string fullid;
+        public string name;
+        public string category;
+        public int price;
+        public string description;
+        public string crafting;
 
-        internal static Texture2D icon;
-        internal static Texture2D terrainSprites;
-        internal static CustomObjectData objectData;
-        internal static CustomObjectData junkObjectData;
-
-        internal static void init()
+        public CustomObjectData createObjectData(Texture2D texture, Type type)
         {
-            icon = TubesMod._helper.Content.Load<Texture2D>(@"Assets/icon.png");
-            terrainSprites = TubesMod._helper.Content.Load<Texture2D>(@"Assets/terrain.png");
-            objectData = new CustomObjectData(
-                TubeInfo.fullid,
-                $"{TubeInfo.name}/{TubeInfo.price}/-300/{TubeInfo.category} -24/{TubeInfo.name}/{TubeInfo.description}",
-                TubeInfo.icon,
+            return new CustomObjectData(
+                fullid,
+                $"{name}/{price}/-300/{category} -24/{name}/{description}",
+                texture,
                 Color.White,
                 0,
                 false,
-                typeof(TubeObject),
-                new CraftingData(TubeInfo.fullid, TubeInfo.crafting));
+                type,
+                crafting != null ? new CraftingData(fullid, crafting) : null);
+        }
+    }
 
-            junkObjectData = new CustomObjectData(
-                $"{TubeInfo.fullid} junk",
-                $"{TubeInfo.name} junk/{TubeInfo.price}/-300/{TubeInfo.category} -24/{TubeInfo.name}/{TubeInfo.description}",
-                TubeInfo.icon,
-                Color.White,
-                0,
-                false,
-                null, // typeof(TubeObject),
-                null);
+    public class JunkObject {
+        internal static Blueprint blueprint = new Blueprint {
+            fullid = "Pneumatic Tube junk",
+            name = "Pneumatic Tube junk",
+            category = "Crafting",
+            price = 100,
+            description = "Temporary internal object left behind when a tube is junked. Player shouldn't see this.",
+        };
+
+        internal static CustomObjectData objectData;
+
+        internal static void init(Texture2D icon)
+        {
+            objectData = blueprint.createObjectData(icon, null);
         }
     }
 
     // The Tube object type. This is used whenever the object is not placed on the ground (it's not a terrain feature).
     public class TubeObject : StardewValley.Object, ICustomObject, ISaveElement, IDrawFromCustomObjectData
     {
-        public CustomObjectData data { get => TubeInfo.objectData; }
+        internal static Texture2D icon;
+        internal static CustomObjectData objectData;
+
+        internal static Blueprint blueprint = new Blueprint {
+            fullid = "Pneumatic Tube",
+            name = "Pneumatic Tube",
+            category = "Crafting",
+            price = 100,
+            description = "Connects machines together with the magic of vacuums.",
+            crafting = "337 1",
+        };
+
+        internal static void init()
+        {
+            icon = TubesMod._helper.Content.Load<Texture2D>(@"Assets/icon.png");
+            objectData = blueprint.createObjectData(icon, typeof(TubeObject));
+
+            JunkObject.init(icon);
+        }
+
+        public CustomObjectData data { get => objectData; }
 
         public TubeObject()
         {
@@ -87,28 +105,14 @@ namespace Tubes
             stack = additionalSaveData["stack"].toInt();
         }
 
-        public Item getOne()
+        public override Item getOne()
         {
-            return new TubeObject(TubeInfo.objectData) { tileLocation = Vector2.Zero, name = name, price = price };
+            return new TubeObject(data) { tileLocation = Vector2.Zero, name = name, price = price };
         }
 
         public ICustomObject recreate(Dictionary<string, string> additionalSaveData, object replacement)
         {
-            return new TubeObject(TubeInfo.objectData);
-        }
-
-        public override void drawInMenu(SpriteBatch spriteBatch, Vector2 location, float scaleSize, float transparency, float layerDepth, bool drawStackNumber)
-        {
-            spriteBatch.Draw(Game1.shadowTexture, location + new Vector2((Game1.tileSize / 2), (Game1.tileSize * 3 / 4)), new Rectangle?(Game1.shadowTexture.Bounds), Color.White * 0.5f, 0.0f, new Vector2(Game1.shadowTexture.Bounds.Center.X, Game1.shadowTexture.Bounds.Center.Y), 3f, SpriteEffects.None, layerDepth - 0.0001f);
-            spriteBatch.Draw(TubeInfo.icon, location + new Vector2((Game1.tileSize / 2), (Game1.tileSize / 2)), new Rectangle?(TubeInfo.objectData.sourceRectangle), Color.White * transparency, 0.0f, new Vector2(16 / 2, 16 / 2), Game1.pixelZoom * scaleSize, SpriteEffects.None, layerDepth);
-
-            if (drawStackNumber && maximumStackSize() > 1 && (scaleSize > 0.3 && Stack != int.MaxValue) && Stack > 1)
-                Utility.drawTinyDigits(stack, spriteBatch, location + new Vector2((Game1.tileSize - Utility.getWidthOfTinyDigitString(stack, 3f * scaleSize)) + 3f * scaleSize, (float)(Game1.tileSize - 18.0 * scaleSize + 2.0)), 3f * scaleSize, 1f, Color.White);
-        }
-
-        public override void drawWhenHeld(SpriteBatch spriteBatch, Vector2 objectPosition, StardewValley.Farmer f)
-        {
-            spriteBatch.Draw(TubeInfo.icon, objectPosition, TubeInfo.objectData.sourceRectangle, Color.White, 0.0f, Vector2.Zero, Game1.pixelZoom, SpriteEffects.None, Math.Max(0.0f, (f.getStandingY() + 2) / 10000f));
+            return new TubeObject(data);
         }
     }
 }

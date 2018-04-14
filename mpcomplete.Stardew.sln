@@ -18,6 +18,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IntravenousCoffee", "Intrav
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tubes", "Tubes\Tubes.csproj", "{C4CC2903-4429-4BA5-9B4E-5DCA95FAF4B9}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tubes2", "Tubes2\Tubes2.csproj", "{5C546C0F-704D-4A3E-8699-7297091B28F1}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		Common\Common.projitems*{2da0145a-032e-4a86-9c9b-b5bebe92d2d9}*SharedItemsImports = 4
@@ -47,6 +49,10 @@ Global
 		{C4CC2903-4429-4BA5-9B4E-5DCA95FAF4B9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C4CC2903-4429-4BA5-9B4E-5DCA95FAF4B9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C4CC2903-4429-4BA5-9B4E-5DCA95FAF4B9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5C546C0F-704D-4A3E-8699-7297091B28F1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5C546C0F-704D-4A3E-8699-7297091B28F1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5C546C0F-704D-4A3E-8699-7297091B28F1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5C546C0F-704D-4A3E-8699-7297091B28F1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

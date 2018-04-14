@@ -105,7 +105,9 @@ namespace Tubes
             _helper = helper;
             _monitor = Monitor;
 
-            TubeInfo.init();
+            TubeObject.init();
+            TubeTerrain.init();
+            PortObject.init();
 
             GameEvents.FirstUpdateTick += this.GameEvents_FirstUpdateTick;
             LocationEvents.LocationsChanged += this.LocationEvents_LocationsChanged;
@@ -141,9 +143,9 @@ namespace Tubes
             List<Vector2> tubes = new List<Vector2>();
             List<Vector2> junk = new List<Vector2>();
             foreach (var obj in Game1.currentLocation.objects) {
-                if (obj.Value.parentSheetIndex == TubeInfo.objectData.sdvId)
+                if (obj.Value.parentSheetIndex == TubeObject.objectData.sdvId)
                     tubes.Add(obj.Key);
-                if (obj.Value.parentSheetIndex == TubeInfo.junkObjectData.sdvId)
+                if (obj.Value.parentSheetIndex == JunkObject.objectData.sdvId)
                     junk.Add(obj.Key);
             }
             foreach (var pos in tubes) {
@@ -179,12 +181,20 @@ namespace Tubes
             // Override the crafting menu so that our recipe has the proper icon and text.
             if (Game1.activeClickableMenu is GameMenu activeMenu && Helper.Reflection.GetField<List<IClickableMenu>>(activeMenu, "pages").GetValue().Find(p => p is CraftingPage) is CraftingPage craftingPage) {
                 for (int i = 0; i < craftingPage.pagesOfCraftingRecipes.Count; i++) {
-                    if (craftingPage.pagesOfCraftingRecipes[i].Find(k => k.Value.name == TubeInfo.fullid) is KeyValuePair<ClickableTextureComponent, CraftingRecipe> kv && kv.Value != null && kv.Key != null) {
-                        kv.Key.texture = TubeInfo.icon;
-                        kv.Key.sourceRect = TubeInfo.objectData.sourceRectangle;
+                    if (craftingPage.pagesOfCraftingRecipes[i].Find(k => k.Value.name == TubeObject.blueprint.fullid) is KeyValuePair<ClickableTextureComponent, CraftingRecipe> kv && kv.Value != null && kv.Key != null) {
+                        kv.Key.texture = TubeObject.icon;
+                        kv.Key.sourceRect = TubeObject.objectData.sourceRectangle;
                         kv.Key.baseScale = 4.0f;
-                        kv.Value.DisplayName = TubeInfo.name;
-                        Helper.Reflection.GetField<string>(kv.Value, "description").SetValue(TubeInfo.description);
+                        kv.Value.DisplayName = TubeObject.blueprint.name;
+                        Helper.Reflection.GetField<string>(kv.Value, "description").SetValue(TubeObject.blueprint.description);
+                    }
+                    if (craftingPage.pagesOfCraftingRecipes[i].Find(k => k.Value.name == PortObject.blueprint.fullid) is KeyValuePair<ClickableTextureComponent, CraftingRecipe> kv2 && kv2.Value != null && kv2.Key != null) {
+                        kv = kv2;
+                        kv.Key.texture = PortObject.icon;
+                        kv.Key.sourceRect = PortObject.objectData.sourceRectangle;
+                        kv.Key.baseScale = 4.0f;
+                        kv.Value.DisplayName = PortObject.blueprint.name;
+                        Helper.Reflection.GetField<string>(kv.Value, "description").SetValue(PortObject.blueprint.description);
                     }
                 }
             }

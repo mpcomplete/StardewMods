@@ -12,6 +12,9 @@ namespace Tubes
     // A terrain feature representation of our Pneumatic Tube. For our purposes, it's just an object that you can walk through.
     public class TubeTerrain : TerrainFeature, ISaveElement
     {
+        internal static Texture2D spriteSheet;
+        internal const int spriteSize = 48;
+        
         // Index into the TubeInfo.terrainSprites sheet for this tube (e.g. a left-right tube or 4-way tube, etc).
         private int spriteIndex;
         // Number of clockwise quarter rotations to draw with.
@@ -21,6 +24,11 @@ namespace Tubes
         {
             if (Flooring.drawGuide == null)
                 Flooring.populateDrawGuide();
+        }
+
+        internal static void init()
+        {
+            spriteSheet = TubesMod._helper.Content.Load<Texture2D>(@"Assets/terrain.png");
         }
 
         internal static void updateSpritesInLocation(GameLocation location)
@@ -74,11 +82,11 @@ namespace Tubes
 
             Game1.playSound("hammer");
 
-            location.debris.Add(new Debris((Item)new StardewValley.Object(TubeInfo.objectData.sdvId, 1, false, -1, 0), tileLocation * (float)Game1.tileSize + new Vector2((float)(Game1.tileSize / 2), (float)(Game1.tileSize / 2))));
+            location.debris.Add(new Debris((Item)new StardewValley.Object(TubeObject.objectData.sdvId, 1, false, -1, 0), tileLocation * (float)Game1.tileSize + new Vector2((float)(Game1.tileSize / 2), (float)(Game1.tileSize / 2))));
             location.terrainFeatures.Remove(tileLocation);
 
             // Add a temporary junk object to force a LocationObjectsChanged event. Will be removed there.
-            location.objects.Add(tileLocation, new StardewValley.Object(TubeInfo.junkObjectData.sdvId, 1, false, -1, 0));
+            location.objects.Add(tileLocation, new StardewValley.Object(JunkObject.objectData.sdvId, 1, false, -1, 0));
             return false;
         }
 
@@ -89,14 +97,14 @@ namespace Tubes
 
             Vector2 position =
                 Game1.GlobalToLocal(Game1.viewport, new Vector2(tileLocation.X * (float)Game1.tileSize, tileLocation.Y * (float)Game1.tileSize));
-            Rectangle source = Game1.getSourceRectForStandardTileSheet(TubeInfo.terrainSprites, spriteIndex, TubeInfo.spriteSize, TubeInfo.spriteSize);
+            Rectangle source = Game1.getSourceRectForStandardTileSheet(spriteSheet, spriteIndex, spriteSize, spriteSize);
             Vector2 offset = Vector2.Zero;
             switch (spriteRotation) {
-                case 3: offset = new Vector2(TubeInfo.spriteSize, 0); break;
-                case 2: offset = new Vector2(TubeInfo.spriteSize, TubeInfo.spriteSize); break;
-                case 1: offset = new Vector2(0, TubeInfo.spriteSize); break;
+                case 3: offset = new Vector2(spriteSize, 0); break;
+                case 2: offset = new Vector2(spriteSize, spriteSize); break;
+                case 1: offset = new Vector2(0, spriteSize); break;
             }
-            spriteBatch.Draw(TubeInfo.terrainSprites, position, new Rectangle?(source), Color.White, spriteRotation * kQuarterClockwise, offset, KWhyDoesThisScaleWork * Game1.pixelZoom, SpriteEffects.None, 1E-09f);
+            spriteBatch.Draw(spriteSheet, position, new Rectangle?(source), Color.White, spriteRotation * kQuarterClockwise, offset, KWhyDoesThisScaleWork * Game1.pixelZoom, SpriteEffects.None, 1E-09f);
         }
 
         // Updates which sprite to use in the terrainSprites sheet, based on connecting tubes.
