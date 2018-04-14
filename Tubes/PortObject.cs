@@ -137,9 +137,10 @@ namespace Tubes
             List<Item> removedItems = new List<Item>();
             foreach (Item item in provider.attachedChest.items) {
                 if (item.category == request.category) {
-                    int take = Math.Min(numRequested, item.Stack);
-                    item.Stack -= take;
-                    numRequested -= take;
+                    int amountToTake = Math.Min(numRequested, item.Stack);
+                    int amountTook = this.addToChest(item, amountToTake);
+                    item.Stack -= amountTook;
+                    numRequested -= amountTook;
                     if (item.Stack <= 0)
                         removedItems.Add(item);
                     if (numRequested <= 0)
@@ -157,6 +158,61 @@ namespace Tubes
                     return i.Stack;
                 return 0;
             });
+        }
+
+        private int addToChest(Item item, int amount) {
+            if (amount <= 0)
+                return 0;
+
+            int totalAdded = 0;
+            IList<Item> contents = this.attachedChest.items;
+
+            // try stack into existing slot
+            foreach (Item slot in contents) {
+                if (slot != null && item.canStackWith(slot)) {
+                    int added = amount - slot.addToStack(amount);
+                    totalAdded += added;
+                    amount -= added;
+                    if (amount <= 0)
+                        return totalAdded;
+                }
+            }
+
+            // try add to empty slot
+            for (int i = 0; i < Chest.capacity && i < contents.Count; i++) {
+                if (contents[i] == null) {
+                    contents[i] = this.getNewStack(item, amount);
+                    return amount;
+                }
+            }
+
+            // try add new slot
+            if (contents.Count < Chest.capacity) {
+                contents.Add(this.getNewStack(item, amount));
+                return amount;
+            }
+
+            return totalAdded;
+        }
+
+        private Item getNewStack(Item original, int amount = 1)
+        {
+            if (original == null)
+                return null;
+
+            Item stack = original.getOne();
+            stack.Stack = amount;
+
+            if (original is SObject originalObj && stack is SObject stackObj) {
+                // fix some fields not copied by getOne()
+                stackObj.name = originalObj.name;
+                stackObj.DisplayName = originalObj.DisplayName;
+                stackObj.preserve = originalObj.preserve;
+                stackObj.preservedParentSheetIndex = originalObj.preservedParentSheetIndex;
+                stackObj.honeyType = originalObj.honeyType;
+            }
+
+            return stack;
         }
     }
 }
