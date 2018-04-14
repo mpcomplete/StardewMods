@@ -17,8 +17,8 @@ namespace Tubes
     internal class PortFilter
     {
         internal int category;
-        internal int provideAmount;  // negative means request
-        internal int requestAmount { get => -provideAmount; }
+        internal int requestAmount;  // negative means it's a provider
+        internal bool isProvider { get => requestAmount < 0; }
     }
 
     // The Port object type. This object connects a chest to the tube network, and can be configured with
@@ -47,7 +47,7 @@ namespace Tubes
 
         internal Chest attachedChest;
         internal PortFilter[] filters = new PortFilter[0];
-        internal IEnumerable<PortFilter> provides { get => filters.Where(f => f.provideAmount > 0);  }
+        internal IEnumerable<PortFilter> provides { get => filters.Where(f => f.isProvider);  }
         internal IEnumerable<PortFilter> requests { get => filters.Where(f => f.requestAmount > 0);  }
 
         public PortObject()
@@ -108,17 +108,16 @@ namespace Tubes
         {
             if (filters.Length == 2) {
                 filters = new PortFilter[] {
-                    new PortFilter() { category = -79, provideAmount = int.MaxValue }
+                    new PortFilter() { category = -79, requestAmount = -1 }
                 };
                 Game1.showRedMessage("Providing fruits.");
             } else {
                 filters = new PortFilter[] {
-                    new PortFilter() { category = -79, provideAmount = -200 },
-                    new PortFilter() { category = -26, provideAmount = int.MaxValue },
+                    new PortFilter() { category = -79, requestAmount = 200 },
+                    new PortFilter() { category = -26, requestAmount = -1 },
                 };
                 Game1.showRedMessage("Requesting 200 fruits, providing craftables.");
             }
-            Game1.playSound("hammer");
             return false;
         }
 
@@ -134,6 +133,9 @@ namespace Tubes
 
         internal void requestFrom(PortObject provider, PortFilter request, ref int numRequested)
         {
+            if (!provider.canProvide(request))
+               return;
+
             List<Item> removedItems = new List<Item>();
             foreach (Item item in provider.attachedChest.items) {
                 if (item.category == request.category) {
@@ -151,6 +153,11 @@ namespace Tubes
                 provider.attachedChest.items.Remove(item);
         }
 
+        internal bool canProvide(PortFilter request)
+        {
+            return this.provides.Any(p => p.category == request.category);
+        }
+
         internal int amountMatching(PortFilter filter)
         {
             return attachedChest.items.Sum(i => {
@@ -159,7 +166,6 @@ namespace Tubes
                 return 0;
             });
         }
-
     }
 
     public class ChestHelper
