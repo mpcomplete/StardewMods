@@ -138,7 +138,7 @@ namespace Tubes
             foreach (Item item in provider.attachedChest.items) {
                 if (item.category == request.category) {
                     int amountToTake = Math.Min(numRequested, item.Stack);
-                    int amountTook = this.addToChest(item, amountToTake);
+                    int amountTook = ChestHelper.addToChest(this.attachedChest, item, amountToTake);
                     item.Stack -= amountTook;
                     numRequested -= amountTook;
                     if (item.Stack <= 0)
@@ -160,12 +160,17 @@ namespace Tubes
             });
         }
 
-        private int addToChest(Item item, int amount) {
+    }
+
+    public class ChestHelper
+    {
+        public static int addToChest(Chest chest, Item item, int amount)
+        {
             if (amount <= 0)
                 return 0;
 
             int totalAdded = 0;
-            IList<Item> contents = this.attachedChest.items;
+            IList<Item> contents = chest.items;
 
             // try stack into existing slot
             foreach (Item slot in contents) {
@@ -181,21 +186,21 @@ namespace Tubes
             // try add to empty slot
             for (int i = 0; i < Chest.capacity && i < contents.Count; i++) {
                 if (contents[i] == null) {
-                    contents[i] = this.getNewStack(item, amount);
+                    contents[i] = ChestHelper.cloneItem(item, amount);
                     return amount;
                 }
             }
 
             // try add new slot
             if (contents.Count < Chest.capacity) {
-                contents.Add(this.getNewStack(item, amount));
+                contents.Add(ChestHelper.cloneItem(item, amount));
                 return amount;
             }
 
             return totalAdded;
         }
 
-        private Item getNewStack(Item original, int amount = 1)
+        private static Item cloneItem(Item original, int amount = 1)
         {
             if (original == null)
                 return null;
