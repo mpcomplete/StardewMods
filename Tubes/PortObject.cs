@@ -8,6 +8,7 @@ using StardewValley.Objects;
 using PyTK.Extensions;
 using StardewValley.Tools;
 using System.Linq;
+using SObject = StardewValley.Object;
 
 namespace Tubes
 {
@@ -118,13 +119,17 @@ namespace Tubes
                 Game1.showRedMessage("Requesting 200 crops, providing craftables.");
             }
             Game1.playSound("hammer");
-            //TubeObject link = (TubeObject)this.getOne();
-            //link.linkTo(this);
-            //this.linkTo(link);
-
-            // Find any "output" pipe in inventory. remove it.
-            // Add "output" to inventory.
             return false;
+        }
+
+        internal void updateAttachedChest(GameLocation location)
+        {
+            foreach (Vector2 adjacent in Utility.getAdjacentTileLocations(this.tileLocation)) {
+                if (location.objects.TryGetValue(adjacent, out SObject o) && o is Chest chest) {
+                    this.attachedChest = chest;
+                    break;
+                }
+            }
         }
 
         internal void requestFrom(PortObject provider, PortFilter request, ref int numRequested)

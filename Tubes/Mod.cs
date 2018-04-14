@@ -100,16 +100,20 @@ namespace Tubes
         internal static IAutomateAPI automateApi;
         internal Dictionary<GameLocation, HashSet<ContainerBridge>> bridges = new Dictionary<GameLocation, HashSet<ContainerBridge>>();
 
+        internal Dictionary<GameLocation, HashSet<TubeNetwork>> tubeNetworks = new Dictionary<GameLocation, HashSet<TubeNetwork>>();
+        internal IEnumerable<TubeNetwork> allTubeNetworks { get => tubeNetworks.SelectMany(kv => kv.Value); }
+        internal HashSet<GameLocation> reloadQueue = new HashSet<GameLocation>();
+
         public override void Entry(IModHelper helper)
         {
             _helper = helper;
             _monitor = Monitor;
-
             TubeObject.init();
             TubeTerrain.init();
             PortObject.init();
 
             GameEvents.FirstUpdateTick += this.GameEvents_FirstUpdateTick;
+            GameEvents.OneSecondTick += this.GameEvents_OneSecondTick;
             LocationEvents.LocationsChanged += this.LocationEvents_LocationsChanged;
             LocationEvents.LocationObjectsChanged += this.LocationEvents_LocationObjectsChanged;
             MenuEvents.MenuChanged += MenuEvents_MenuChanged;
@@ -128,14 +132,24 @@ namespace Tubes
             automateApi.LocationMachinesChanged += AutomateEvents_LocationMachinesChanged;
         }
 
+        private void GameEvents_OneSecondTick(object sender, EventArgs e)
+        {
+            foreach (GameLocation location in this.reloadQueue)
+                this.tubeNetworks[location] = TubeNetwork.getAllNetworksIn(location);
+            this.reloadQueue.Clear();
+        }
+
         private void LocationEvents_LocationsChanged(object sender, EventArgsGameLocationsChanged e)
         {
-            this.bridges.Clear();
+            this.tubeNetworks.Clear();
+            foreach (GameLocation location in CommonHelper.GetLocations())
+                this.reloadQueue.Add(location);
         }
 
         private void LocationEvents_LocationObjectsChanged(object sender, EventArgsLocationObjectsChanged e)
         {
-            this.bridges.Remove(Game1.currentLocation);
+            this.tubeNetworks.Remove(Game1.currentLocation);
+            this.reloadQueue.Add(Game1.currentLocation);
 
             // When the player places a TubeObject, it's placed as an object. Gather them and replace them with TubeTerrain
             // instead. This seems to be the only way to place terrain features.

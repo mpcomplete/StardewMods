@@ -1,10 +1,8 @@
 ﻿using Microsoft.Xna.Framework;
 using StardewValley;
-using System;
+using StardewValley.TerrainFeatures;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using SObject = StardewValley.Object;
 
 namespace Tubes
 {
@@ -12,8 +10,33 @@ namespace Tubes
     {
         private PortObject[] ports;
 
-        internal void updateNetwork(GameLocation location, Vector2 tileLocation)
+        internal TubeNetwork(GameLocation location, Vector2 startTile)
         {
+            List<PortObject> ports = new List<PortObject>();
+            List<Vector2> visited = new List<Vector2>();
+            Queue<Vector2> toVisit = new Queue<Vector2>();
+            toVisit.Enqueue(startTile);
+
+            while (toVisit.Count > 0) {
+                Vector2 tile = toVisit.Dequeue();
+                if (visited.Contains(tile))
+                    continue;
+                visited.Add(tile);
+
+                if (location.objects.TryGetValue(tile, out SObject o) && o is PortObject port) {
+                    ports.Add(port);
+                    port.updateAttachedChest(location);
+                } else if (location.terrainFeatures.TryGetValue(tile, out TerrainFeature t) && t is TubeTerrain) {
+                    // keep searching
+                } else {
+                    continue;
+                }
+
+                foreach (Vector2 adjacent in Utility.getAdjacentTileLocations(tile))
+                    toVisit.Enqueue(adjacent);
+            }
+
+            this.ports = ports.ToArray();
         }
 
         internal void process()
