@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using Pathoschild.Stardew.Common;
 using StardewValley;
 using StardewValley.TerrainFeatures;
 using System.Collections.Generic;
@@ -10,11 +11,21 @@ namespace Tubes
     {
         private PortObject[] ports;
 
-        internal TubeNetwork(GameLocation location, Vector2 startTile)
+        internal static IEnumerable<TubeNetwork> getAllNetworksIn(GameLocation location)
         {
-            List<PortObject> ports = new List<PortObject>();
-            List<Vector2> visited = new List<Vector2>();
-            Queue<Vector2> toVisit = new Queue<Vector2>();
+            var visited = new HashSet<Vector2>();
+            foreach (Vector2 tile in location.GetTiles()) {
+                if (visited.Contains(tile))
+                    continue;
+                if (TubeNetwork.getNetworkAtTile(location, tile, visited) is TubeNetwork network)
+                    yield return network;
+            }
+        }
+
+        internal static TubeNetwork getNetworkAtTile(GameLocation location, Vector2 startTile, ISet<Vector2> visited)
+        {
+            var ports = new List<PortObject>();
+            var toVisit = new Queue<Vector2>();
             toVisit.Enqueue(startTile);
 
             while (toVisit.Count > 0) {
@@ -36,7 +47,9 @@ namespace Tubes
                     toVisit.Enqueue(adjacent);
             }
 
-            this.ports = ports.ToArray();
+            if (ports.Count > 0)
+                return new TubeNetwork() { ports = ports.ToArray() };
+            return null;
         }
 
         internal void process()

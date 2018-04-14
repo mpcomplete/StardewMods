@@ -54,6 +54,7 @@
     <Compile Include="Mod.cs" />
     <Compile Include="PortObject.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TubeNetwork.cs" />
     <Compile Include="TubeObject.cs" />
     <Compile Include="TubeTerrain.cs" />
   </ItemGroup>
