@@ -46,7 +46,7 @@ namespace Tubes
         public CustomObjectData data { get => objectData; }
 
         internal Chest attachedChest;
-        internal PortFilter[] filters;
+        internal PortFilter[] filters = new PortFilter[0];
         internal IEnumerable<PortFilter> provides { get => filters.Where(f => f.provideAmount > 0);  }
         internal IEnumerable<PortFilter> requests { get => filters.Where(f => f.requestAmount > 0);  }
 
@@ -106,17 +106,17 @@ namespace Tubes
 
         public override bool clicked(StardewValley.Farmer who)
         {
-            if (filters == null || filters.Length == 2) {
+            if (filters.Length == 2) {
                 filters = new PortFilter[] {
-                    new PortFilter() { category = -75, provideAmount = int.MaxValue }
+                    new PortFilter() { category = -79, provideAmount = int.MaxValue }
                 };
-                Game1.showRedMessage("Providing crops.");
+                Game1.showRedMessage("Providing fruits.");
             } else {
                 filters = new PortFilter[] {
-                    new PortFilter() { category = -75, provideAmount = -200 },
+                    new PortFilter() { category = -79, provideAmount = -200 },
                     new PortFilter() { category = -26, provideAmount = int.MaxValue },
                 };
-                Game1.showRedMessage("Requesting 200 crops, providing craftables.");
+                Game1.showRedMessage("Requesting 200 fruits, providing craftables.");
             }
             Game1.playSound("hammer");
             return false;
@@ -146,7 +146,7 @@ namespace Tubes
                         break;
                 }
             }
-            foreach (Item item in provider.attachedChest.items)
+            foreach (Item item in removedItems)
                 provider.attachedChest.items.Remove(item);
         }
 
