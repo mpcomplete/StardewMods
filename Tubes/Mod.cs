@@ -8,13 +8,8 @@ using StardewValley;
 using Pathoschild.Stardew.Common;
 using Microsoft.Xna.Framework;
 using Pathoschild.Stardew.Automate;
-using StardewValley.TerrainFeatures;
 using SObject = StardewValley.Object;
-using StardewValley.Locations;
-using StardewValley.Buildings;
-using Pathoschild.Stardew.Automate.Framework;
 using System.Linq;
-using System.Collections;
 using StardewValley.Menus;
 using PyTK.Extensions;
 
