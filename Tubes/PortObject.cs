@@ -76,7 +76,11 @@ namespace Tubes
 
         public void rebuild(Dictionary<string, string> additionalSaveData, object replacement)
         {
-            //tileLocation = additionalSaveData["tileLocation"].Split(',').toList(i => i.toInt()).toVector<Vector2>();
+            var tmp = additionalSaveData["tileLocation"].Split(',');
+            var tmp2 = tmp.toList(i => i.toInt());
+            var tmp3 = tmp2.toVector<Vector2>();
+
+            tileLocation = additionalSaveData["tileLocation"].Split(',').toList(i => i.toInt()).toVector<Vector2>();
             name = additionalSaveData["name"];
             stack = additionalSaveData["stack"].toInt();
         }
@@ -118,6 +122,9 @@ namespace Tubes
                 };
                 Game1.showRedMessage("Requesting 200 fruits, providing craftables.");
             }
+
+            Game1.activeClickableMenu = new PortMenu();
+
             return false;
         }
 

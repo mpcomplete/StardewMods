@@ -7,7 +7,6 @@ using StardewValley;
 
 using Pathoschild.Stardew.Common;
 using Microsoft.Xna.Framework;
-using Pathoschild.Stardew.Automate;
 using SObject = StardewValley.Object;
 using System.Linq;
 using StardewValley.Menus;
@@ -20,7 +19,6 @@ namespace Tubes
     {
         internal static IModHelper _helper;
         internal static IMonitor _monitor;
-        internal static IAutomateAPI automateApi;
 
         internal Dictionary<GameLocation, TubeNetwork[]> tubeNetworks = new Dictionary<GameLocation, TubeNetwork[]> ();
         internal IEnumerable<TubeNetwork> allTubeNetworks { get => tubeNetworks.SelectMany(kv => kv.Value); }
