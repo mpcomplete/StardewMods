@@ -76,11 +76,7 @@ namespace Tubes
 
         public void rebuild(Dictionary<string, string> additionalSaveData, object replacement)
         {
-            var tmp = additionalSaveData["tileLocation"].Split(',');
-            var tmp2 = tmp.toList(i => i.toInt());
-            var tmp3 = tmp2.toVector<Vector2>();
-
-            tileLocation = additionalSaveData["tileLocation"].Split(',').toList(i => i.toInt()).toVector<Vector2>();
+            tileLocation = additionalSaveData["tileLocation"].Split(',').Select((i) => i.toInt()).ToList().toVector<Vector2>();
             name = additionalSaveData["name"];
             stack = additionalSaveData["stack"].toInt();
         }
