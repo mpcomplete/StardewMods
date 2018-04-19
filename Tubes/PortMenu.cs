@@ -15,13 +15,28 @@ namespace Tubes
     internal class PortFilterComponent
     {
         // toggle button for request/provide
+        // minus button for delete
+        internal readonly PortFilter Filter;
         internal readonly DropdownComponent Dropdown;
+        internal readonly Action OnDeleted;
 
-        internal PortFilterComponent(DropDownOptionSelected onSelected, Action onDeleted)
+        internal PortFilterComponent(PortFilter filter, Action onDeleted)
         {
-            this.Dropdown = new DropdownComponent(new List<string> { "Fruits", "Craftables" }, "Category", 300);
-            this.Dropdown.visible = true;
-            this.Dropdown.DropDownOptionSelected += onSelected;
+            this.Filter = filter;
+            this.OnDeleted = onDeleted;
+
+            int selected = 0;
+            if (ItemHelper.NumToCategory.TryGetValue(this.Filter.category, out string category))
+                selected = ItemHelper.Categories.IndexOf(category);
+
+            this.Dropdown = new DropdownComponent(ItemHelper.Categories, "Category", 300) { visible = true, SelectionIndex = selected };
+            this.Dropdown.DropDownOptionSelected += DropDownOptionSelected;
+        }
+
+        internal void DropDownOptionSelected(int selected)
+        {
+            string category = ItemHelper.Categories[selected];
+            this.Filter.category = ItemHelper.CategoryToNum[category];
         }
     }
 
@@ -35,7 +50,7 @@ namespace Tubes
             this.Filters = filters;
             for (int i = 0; i < this.Filters.Count; i++) {
                 int index = i;
-                Components.Add(new PortFilterComponent(s => FilterOptionSelected(index, s), () => FilterDeleted(index)));
+                Components.Add(new PortFilterComponent(this.Filters[index], () => FilterDeleted(index)));
             }
         }
 
@@ -43,21 +58,13 @@ namespace Tubes
         {
             int index = Components.Count;
             Filters.Add(new PortFilter());
-            Components.Add(new PortFilterComponent(s => FilterOptionSelected(index, s), () => FilterDeleted(index)));
+            Components.Add(new PortFilterComponent(this.Filters[index], () => FilterDeleted(index)));
         }
 
         internal void FilterDeleted(int index)
         {
             Filters.RemoveAt(index);
             Components.RemoveAt(index);
-        }
-
-        internal void FilterOptionSelected(int index, int selected)
-        {
-            if (selected == 0)
-                this.Filters[index].category = -79;
-            else
-                this.Filters[index].category = -26;
         }
     }
 

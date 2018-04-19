@@ -16,8 +16,8 @@ namespace Tubes
     // into the attached chest.
     internal class PortFilter
     {
-        internal int category;
-        internal int requestAmount;  // negative means it's a provider
+        internal int category = ItemCategories.Fruits;
+        internal int requestAmount = 0;  // negative means it's a provider
         internal bool isProvider { get => requestAmount < 0; }
     }
 
@@ -229,4 +229,24 @@ namespace Tubes
             return stack;
         }
     }
+
+    public static class ItemCategories
+    {
+        public const int Minerals = -2;
+        public const int Fish = -4;
+        public const int Metals = -15;
+        public const int Artisan = -26;
+        public const int TreeSaps = -27;
+        public const int Vegetables = -75;
+        public const int Fruits = -79;
+        public const int Flowers = -80;
+    }
+
+    public static class ItemHelper
+    {
+        internal static Dictionary<string, int> CategoryToNum = typeof(ItemCategories).GetFields().ToDictionary(f => f.Name, f => (int)f.GetValue(null));
+        internal static Dictionary<int, string> NumToCategory = CategoryToNum.ToDictionary(x => x.Value, x => x.Key);
+        internal static List<string> Categories = CategoryToNum.Keys.ToList();
+    }
+
 }
