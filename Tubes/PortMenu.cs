@@ -8,6 +8,7 @@ using Pathoschild.Stardew.Common;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Menus;
+using StardewModdingAPI.Events;
 
 namespace Tubes
 {
@@ -16,11 +17,47 @@ namespace Tubes
         // toggle button for request/provide
         internal readonly DropdownComponent Dropdown;
 
-        internal PortFilterComponent(DropDownOptionSelected d)
+        internal PortFilterComponent(DropDownOptionSelected onSelected, Action onDeleted)
         {
-            this.Dropdown = new DropdownComponent(new List<string> { "Fruits", "Vegetables" }, "Category", 300);
+            this.Dropdown = new DropdownComponent(new List<string> { "Fruits", "Craftables" }, "Category", 300);
             this.Dropdown.visible = true;
-            this.Dropdown.DropDownOptionSelected += d;
+            this.Dropdown.DropDownOptionSelected += onSelected;
+        }
+    }
+
+    internal class PortFiltersModel
+    {
+        internal List<PortFilter> Filters;
+        internal List<PortFilterComponent> Components = new List<PortFilterComponent>();
+
+        internal PortFiltersModel(List<PortFilter> filters)
+        {
+            this.Filters = filters;
+            for (int i = 0; i < this.Filters.Count; i++) {
+                int index = i;
+                Components.Add(new PortFilterComponent(s => FilterOptionSelected(index, s), () => FilterDeleted(index)));
+            }
+        }
+
+        internal void FilterAdded()
+        {
+            int index = Components.Count;
+            Filters.Add(new PortFilter());
+            Components.Add(new PortFilterComponent(s => FilterOptionSelected(index, s), () => FilterDeleted(index)));
+        }
+
+        internal void FilterDeleted(int index)
+        {
+            Filters.RemoveAt(index);
+            Components.RemoveAt(index);
+        }
+
+        internal void FilterOptionSelected(int index, int selected)
+        {
+            if (selected == 0)
+                this.Filters[index].category = -79;
+            else
+                this.Filters[index].category = -26;
         }
     }
 
@@ -41,17 +78,19 @@ namespace Tubes
         /// <summary>The clickable 'scroll down' icon.</summary>
         private readonly ClickableTextureComponent ScrollDownButton;
 
-        private List<PortFilterComponent> Filters;
         private readonly ClickableTextureComponent AddButton;
+        private PortFiltersModel Model;
+        private List<PortFilterComponent> Filters { get => Model.Components; }
 
-        public PortMenu()
+        public PortMenu(List<PortFilter> filters)
         {
             // add scroll buttons
             this.ScrollUpButton = new ClickableTextureComponent(Rectangle.Empty, Sprites.Icons.Sheet, Sprites.Icons.UpArrow, 1);
             this.ScrollDownButton = new ClickableTextureComponent(Rectangle.Empty, Sprites.Icons.Sheet, Sprites.Icons.DownArrow, 1);
 
-            this.Filters = new List<PortFilterComponent>();
-            this.Filters.Add(new PortFilterComponent(this.DropDownOptionSelected));
+            this.Model = new PortFiltersModel(filters);
+            //this.Filters = new List<PortFilterComponent>();
+            //this.Filters.Add(new PortFilterComponent(this.DropDownOptionSelected));
 
             int scale = 2;
             this.AddButton = new ClickableTextureComponent(Sprites.Icons.GreenPlus, Sprites.Icons.Sheet, Sprites.Icons.GreenPlus, scale);
@@ -68,7 +107,8 @@ namespace Tubes
 
         public void HandleAddClicked()
         {
-            this.Filters.Add(new PortFilterComponent(this.DropDownOptionSelected));
+            this.Model.FilterAdded();
+            //this.Filters.Add(new PortFilterComponent(this.DropDownOptionSelected));
             this.UpdateLayout();
         }
 
@@ -259,7 +299,7 @@ namespace Tubes
 
                 // draw cursor
                 this.drawMouse(Game1.spriteBatch);
-             }, this.OnDrawError);
+            }, this.OnDrawError);
         }
 
 

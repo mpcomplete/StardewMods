@@ -46,7 +46,7 @@ namespace Tubes
         public CustomObjectData data { get => objectData; }
 
         internal Chest attachedChest;
-        internal PortFilter[] filters = new PortFilter[0];
+        internal List<PortFilter> filters = new List<PortFilter>();
         internal IEnumerable<PortFilter> provides { get => filters.Where(f => f.isProvider);  }
         internal IEnumerable<PortFilter> requests { get => filters.Where(f => f.requestAmount > 0);  }
 
@@ -106,20 +106,20 @@ namespace Tubes
 
         public override bool clicked(StardewValley.Farmer who)
         {
-            if (filters.Length == 2) {
-                filters = new PortFilter[] {
-                    new PortFilter() { category = -79, requestAmount = -1 }
-                };
-                Game1.showRedMessage("Providing fruits.");
-            } else {
-                filters = new PortFilter[] {
-                    new PortFilter() { category = -79, requestAmount = 200 },
-                    new PortFilter() { category = -26, requestAmount = -1 },
-                };
-                Game1.showRedMessage("Requesting 200 fruits, providing craftables.");
-            }
+            //if (filters.Length == 2) {
+            //    filters = new PortFilter[] {
+            //        new PortFilter() { category = -79, requestAmount = -1 }
+            //    };
+            //    Game1.showRedMessage("Providing fruits.");
+            //} else {
+            //    filters = new PortFilter[] {
+            //        new PortFilter() { category = -79, requestAmount = 200 },
+            //        new PortFilter() { category = -26, requestAmount = -1 },
+            //    };
+            //    Game1.showRedMessage("Requesting 200 fruits, providing craftables.");
+            //}
 
-            Game1.activeClickableMenu = new PortMenu();
+            Game1.activeClickableMenu = new PortMenu(this.filters);
 
             return false;
         }
