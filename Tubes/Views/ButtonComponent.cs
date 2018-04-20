@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Pathoschild.Stardew.Common;
 using StardewValley;
 using StardewValley.Menus;
 using System;
@@ -91,23 +92,15 @@ namespace Tubes
             Utility.drawTextWithShadow(b, this.label, Game1.dialogueFont, new Vector2((float)(this.button.bounds.Right + Game1.pixelZoom * 4), (float)(this.button.bounds.Y + ((this.button.bounds.Height - labelSize.Y) / 2))), this.enabled ? Game1.textColor : (Game1.textColor * 0.33f), 1f, 0.1f, -1, -1, 1f, 3);
 
             if (isHovering)
-                drawTooltip(Game1.smallFont, HoverText);
+                drawTooltip(b, HoverText);
         }
 
-        private void drawTooltip(SpriteFont font, string description)
+        private void drawTooltip(SpriteBatch b, string text)
         {
-            Vector2 stringLength = font.MeasureString(description);
-            int width = (int)stringLength.X + Game1.tileSize / 2;
-            int height = (int)stringLength.Y + Game1.tileSize / 3 + 5;
-
             int x = (int)(Mouse.GetState().X / Game1.options.zoomLevel) + Game1.tileSize / 2;
             int y = (int)(Mouse.GetState().Y / Game1.options.zoomLevel) + Game1.tileSize / 2;
 
-            if (y + height > Game1.graphics.GraphicsDevice.Viewport.Height)
-                y = Game1.graphics.GraphicsDevice.Viewport.Height - height;
-
-            IClickableMenu.drawTextureBox(Game1.spriteBatch, Game1.menuTexture, new Rectangle(0, 256, 60, 60), x, y, width, height, Color.White);
-            Utility.drawTextWithShadow(Game1.spriteBatch, description, font, new Vector2(x + Game1.tileSize / 4, y + Game1.tileSize / 4), Game1.textColor);
+            CommonHelper.DrawHoverBox(Game1.spriteBatch, text, new Vector2(x, y), 400.0f);
         }
     }
 }

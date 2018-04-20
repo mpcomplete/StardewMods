@@ -177,7 +177,6 @@ namespace Tubes
 
     internal class PortMenu : IClickableMenu
     {
-        internal const int kDropdownWidth = 300;
         internal static readonly Rectangle kMenuTextureSourceRect = new Rectangle(0, 256, 60, 60);
 
         /// <summary>A callback which shows a new lookup for a given subject.</summary>
