@@ -177,18 +177,14 @@ namespace Tubes
 
     internal class PortMenu : IClickableMenu
     {
-        internal static readonly Rectangle kMenuTextureSourceRect = new Rectangle(0, 256, 60, 60);
-
-        /// <summary>The aspect ratio of the page background.</summary>
-        private readonly Vector2 AspectRatio = new Vector2(Sprites.Letter.Sprite.Width, Sprites.Letter.Sprite.Height);
+        private static readonly Rectangle kMenuTextureSourceRect = new Rectangle(0, 256, 60, 60);
+        private const int kScrollAmount = 120;
 
         private readonly ButtonComponent RequestsTabButton;
         private readonly ButtonComponent ProvidesTabButton;
-
+        private readonly ButtonComponent ScrollUpButton;
+        private readonly ButtonComponent ScrollDownButton;
         private readonly ButtonComponent AddButton;
-
-        private readonly ClickableTextureComponent ScrollUpButton;
-        private readonly ClickableTextureComponent ScrollDownButton;
 
         private PortFilterType CurrentTab = PortFilterType.REQUESTS;
 
@@ -197,28 +193,37 @@ namespace Tubes
         private PortFiltersPage Page { get => CurrentTab == PortFilterType.REQUESTS ? RequestsPage : ProvidesPage; }
         private List<PortFilterComponent> Filters { get => Page.Components; }
 
+        private int ScrollOffset;
+        private int ScrollMax;
+
         public PortMenu(List<PortFilter> requests, List<PortFilter> provides)
         {
-            // add scroll buttons
-            this.ScrollUpButton = new ClickableTextureComponent(Rectangle.Empty, Sprites.Icons.Sheet, Sprites.Icons.UpArrow, 1);
-            this.ScrollDownButton = new ClickableTextureComponent(Rectangle.Empty, Sprites.Icons.Sheet, Sprites.Icons.DownArrow, 1);
-
-            RequestsPage = new PortFiltersPage(requests, UpdateLayout, PortFilterType.REQUESTS);
-            ProvidesPage = new PortFiltersPage(provides, UpdateLayout, PortFilterType.PROVIDES);
+            this.RequestsPage = new PortFiltersPage(requests, UpdateLayout, PortFilterType.REQUESTS);
+            this.ProvidesPage = new PortFiltersPage(provides, UpdateLayout, PortFilterType.PROVIDES);
 
             this.RequestsTabButton = new ButtonComponent("", Sprites.Icons.Sheet, Sprites.Icons.DownArrow, 1, true) { visible = true, HoverText = "Requests" };
-            this.RequestsTabButton.ButtonPressed += () => { CurrentTab = PortFilterType.REQUESTS; UpdateLayout(); };
+            this.RequestsTabButton.ButtonPressed += () => { CurrentTab = PortFilterType.REQUESTS; ScrollMax = 0;  UpdateLayout(); };
             this.ProvidesTabButton = new ButtonComponent("", Sprites.Icons.Sheet, Sprites.Icons.UpArrow, 1, true) { visible = true, HoverText = "Provides" };
-            this.ProvidesTabButton.ButtonPressed += () => { CurrentTab = PortFilterType.PROVIDES; UpdateLayout(); };
+            this.ProvidesTabButton.ButtonPressed += () => { CurrentTab = PortFilterType.PROVIDES; ScrollMax = 0; UpdateLayout(); };
             this.AddButton = new ButtonComponent("", Sprites.Icons.Sheet, Sprites.Icons.GreenPlus, 3, true) { visible = true };
             this.AddButton.ButtonPressed += () => { Page.AddFilter(); };
+
+            this.ScrollUpButton = new ButtonComponent("", Sprites.Icons.Sheet, Sprites.Icons.UpArrow, 1, true) { visible = true };
+            this.ScrollUpButton.ButtonPressed += this.ScrollUp;
+            this.ScrollDownButton = new ButtonComponent("", Sprites.Icons.Sheet, Sprites.Icons.DownArrow, 1, true) { visible = true };
+            this.ScrollDownButton.ButtonPressed += this.ScrollDown;
 
             this.UpdateLayout();
         }
 
+        public override bool isWithinBounds(int x, int y)
+        {
+            return new Rectangle(xPositionOnScreen, yPositionOnScreen, width, height).Expand(this.ScrollUpButton.Width + 30).Contains(x, y);
+        }
+
         public override void receiveLeftClick(int x, int y, bool playSound = true)
         {
-            if (!this.isWithinBounds(x, y) && !RequestsTabButton.containsPoint(x, y) && !ProvidesTabButton.containsPoint(x, y)) {
+            if (!this.isWithinBounds(x, y)) {
                 foreach (var filter in this.Filters)
                     filter.Dropdown.releaseLeftClick(x, y);
                 this.exitThisMenu();
@@ -230,6 +235,8 @@ namespace Tubes
                     return;  // stop processing when a filter is clicked, because it may modify Filters.
             }
 
+            ScrollUpButton.receiveLeftClick(x, y, playSound);
+            ScrollDownButton.receiveLeftClick(x, y, playSound);
             RequestsTabButton.receiveLeftClick(x, y, playSound);
             ProvidesTabButton.receiveLeftClick(x, y, playSound);
             AddButton.receiveLeftClick(x, y, playSound);
@@ -256,17 +263,18 @@ namespace Tubes
             RequestsTabButton.performHoverAction(x, y);
         }
 
-        public override void receiveRightClick(int x, int y, bool playSound = true)
-        {
-        }
+        public override void receiveRightClick(int x, int y, bool playSound = true) { }
 
         public override void receiveScrollWheelAction(int direction)
         {
+            // positive direction is UP, positive ScrollOffset is DOWN.
+            ScrollOffset -= direction;
+            UpdateLayout();
         }
 
         public override void gameWindowSizeChanged(Rectangle oldBounds, Rectangle newBounds)
         {
-            this.UpdateLayout();
+            UpdateLayout();
         }
 
         public override void receiveGamePadButton(Buttons button)
@@ -285,10 +293,12 @@ namespace Tubes
 
                 // scroll up
                 case Buttons.RightThumbstickUp:
+                    ScrollUp();
                     break;
 
                 // scroll down
                 case Buttons.RightThumbstickDown:
+                    ScrollDown();
                     break;
             }
         }
@@ -298,6 +308,9 @@ namespace Tubes
             TubesMod._monitor.InterceptErrors("drawing the port filter menu", () => {
                 int x = this.xPositionOnScreen;
                 int y = this.yPositionOnScreen;
+                const int gutter = 15;
+                int contentWidth = this.width - gutter * 2;
+                int contentHeight = this.height - gutter * 2;
 
                 // draw background
                 // (This uses a separate sprite batch because it needs to be drawn before the
@@ -308,12 +321,10 @@ namespace Tubes
                     IClickableMenu.drawTextureBox(backgroundBatch, Game1.menuTexture, kMenuTextureSourceRect, this.xPositionOnScreen, this.yPositionOnScreen, width, height, Color.White);
                     RequestsTabButton.draw(backgroundBatch, x, y - RequestsTabButton.Height);
                     ProvidesTabButton.draw(backgroundBatch, x + RequestsTabButton.Width + 16, y - RequestsTabButton.Height);
+                    ScrollUpButton.draw(backgroundBatch, x + width + gutter, y);
+                    ScrollDownButton.draw(backgroundBatch, x + width + gutter, y + height - ScrollDownButton.Height);
                     backgroundBatch.End();
                 }
-
-                const int gutter = 15;
-                int contentWidth = this.width - gutter * 2;
-                int contentHeight = this.height - gutter * 2;
 
                 // draw foreground
                 // (This uses a separate sprite batch to set a clipping area for scrolling.)
@@ -331,83 +342,6 @@ namespace Tubes
                     contentBatch.End();
                 }
 
-                //    // scroll view
-                //    //this.CurrentScroll = Math.Max(0, this.CurrentScroll); // don't scroll past top
-                //    //this.CurrentScroll = Math.Min(this.MaxScroll, this.CurrentScroll); // don't scroll past bottom
-                //    //topOffset -= this.CurrentScroll; // scrolled down == move text up
-
-                //    //// draw portrait
-                //    //if (subject.DrawPortrait(contentBatch, new Vector2(x + leftOffset, y + topOffset), new Vector2(70, 70)))
-                //    //    leftOffset += 72;
-
-                //    // draw fields
-                //    float wrapWidth = this.width - leftOffset - gutter;
-                //    {
-                //        // draw name & item type
-                //        //{
-                //        //    Vector2 nameSize = contentBatch.DrawTextBlock(font, $"{subject.Name}.", new Vector2(x + leftOffset, y + topOffset), wrapWidth, bold: Constant.AllowBold);
-                //        //    Vector2 typeSize = contentBatch.DrawTextBlock(font, $"{subject.Type}.", new Vector2(x + leftOffset + nameSize.X + spaceWidth, y + topOffset), wrapWidth);
-                //        //    topOffset += Math.Max(nameSize.Y, typeSize.Y);
-                //        //}
-
-                //        //// draw description
-                //        //if (subject.Description != null) {
-                //        //    Vector2 size = contentBatch.DrawTextBlock(font, subject.Description?.Replace(Environment.NewLine, " "), new Vector2(x + leftOffset, y + topOffset), wrapWidth);
-                //        //    topOffset += size.Y;
-                //        //}
-
-                //        //// draw spacer
-                //        //topOffset += lineHeight;
-
-                //        ////// draw custom fields
-                //        //if (this.Fields.Any()) {
-                //        //    ICustomField[] fields = this.Fields;
-                //        //    float cellPadding = 3;
-                //        //    float labelWidth = fields.Where(p => p.HasValue).Max(p => font.MeasureString(p.Label).X);
-                //        //    float valueWidth = wrapWidth - labelWidth - cellPadding * 4 - tableBorderWidth;
-                //        //    foreach (ICustomField field in fields) {
-                //        //        if (!field.HasValue)
-                //        //            continue;
-
-                //        //        // draw label & value
-                //        //        Vector2 labelSize = contentBatch.DrawTextBlock(font, field.Label, new Vector2(x + leftOffset + cellPadding, y + topOffset + cellPadding), wrapWidth);
-                //        //        Vector2 valuePosition = new Vector2(x + leftOffset + labelWidth + cellPadding * 3, y + topOffset + cellPadding);
-                //        //        Vector2 valueSize =
-                //        //            field.DrawValue(contentBatch, font, valuePosition, valueWidth)
-                //        //            ?? contentBatch.DrawTextBlock(font, field.Value, valuePosition, valueWidth);
-                //        //        Vector2 rowSize = new Vector2(labelWidth + valueWidth + cellPadding * 4, Math.Max(labelSize.Y, valueSize.Y));
-
-                //        //        // draw table row
-                //        //        Color lineColor = Color.Gray;
-                //        //        contentBatch.DrawLine(x + leftOffset, y + topOffset, new Vector2(rowSize.X, tableBorderWidth), lineColor); // top
-                //        //        contentBatch.DrawLine(x + leftOffset, y + topOffset + rowSize.Y, new Vector2(rowSize.X, tableBorderWidth), lineColor); // bottom
-                //        //        contentBatch.DrawLine(x + leftOffset, y + topOffset, new Vector2(tableBorderWidth, rowSize.Y), lineColor); // left
-                //        //        contentBatch.DrawLine(x + leftOffset + labelWidth + cellPadding * 2, y + topOffset, new Vector2(tableBorderWidth, rowSize.Y), lineColor); // middle
-                //        //        contentBatch.DrawLine(x + leftOffset + rowSize.X, y + topOffset, new Vector2(tableBorderWidth, rowSize.Y), lineColor); // right
-
-                //        //        // track link area
-                //        //        if (field is ILinkField linkField)
-                //        //            this.LinkFieldAreas[linkField] = new Rectangle((int)valuePosition.X, (int)valuePosition.Y, (int)valueSize.X, (int)valueSize.Y);
-
-                //        //        // update offset
-                //        //        topOffset += Math.Max(labelSize.Y, valueSize.Y);
-                //        //    }
-                //        //}
-                //    }
-
-                //    //// update max scroll
-                //    //this.MaxScroll = Math.Max(0, (int)(topOffset - contentHeight + this.CurrentScroll));
-
-                //    //// draw scroll icons
-                //    //if (this.MaxScroll > 0 && this.CurrentScroll > 0)
-                //    //    this.ScrollUpButton.draw(contentBatch);
-                //    //if (this.MaxScroll > 0 && this.CurrentScroll < this.MaxScroll)
-                //    //    this.ScrollDownButton.draw(spriteBatch);
-
-                //    // end draw
-                //    contentBatch.End();
-                //}
-
                 // draw cursor
                 this.drawMouse(Game1.spriteBatch);
             }, (Exception ex) => {
@@ -417,32 +351,43 @@ namespace Tubes
 
         private void UpdateLayout()
         {
-            // update size
-            this.width = Math.Min(Game1.tileSize * 14, Game1.viewport.Width);
-            this.height = Math.Min((int)(this.AspectRatio.Y / this.AspectRatio.X * this.width), Game1.viewport.Height);
+            this.width = Math.Min(Game1.tileSize * 16, Game1.viewport.Width);
+            this.height = Math.Min(Game1.tileSize *10, Game1.viewport.Height);
 
-            // update position
             Vector2 origin = Utility.getTopLeftPositionForCenteringOnScreen(this.width, this.height);
             this.xPositionOnScreen = (int)origin.X;
             this.yPositionOnScreen = (int)origin.Y;
 
-            // update up/down buttons
+            ScrollOffset = Math.Max(0, ScrollOffset); // don't scroll past top
+            ScrollOffset = Math.Min(ScrollMax, ScrollOffset); // don't scroll past bottom
+
             int margin = 24;
             int x = this.xPositionOnScreen + margin;
-            int y = this.yPositionOnScreen + margin;
-            int gutter = 3;
-            int contentHeight = this.height - gutter * 2;
-            this.ScrollUpButton.bounds = new Rectangle(x + gutter, (int)(y + contentHeight - Sprites.Icons.UpArrow.Height - gutter - Sprites.Icons.DownArrow.Height), Sprites.Icons.UpArrow.Height, Sprites.Icons.UpArrow.Width);
-            this.ScrollDownButton.bounds = new Rectangle(x + gutter, (int)(y + contentHeight - Sprites.Icons.DownArrow.Height), Sprites.Icons.DownArrow.Height, Sprites.Icons.DownArrow.Width);
+            int y = this.yPositionOnScreen + margin - ScrollOffset;
+            int contentHeight = this.height - margin * 2;
+            int contentTop = y;
 
-            // update filters
             foreach (PortFilterComponent filter in this.Filters) {
                 filter.UpdateLayout(x, y, width - margin * 2, height - margin * 2);
                 y += filter.Height + margin;
             }
 
-            this.AddButton.updateLocation(x, y);
-            this.AddButton.HoverText = CurrentTab == PortFilterType.REQUESTS ? "New Request" : "New Provider";
+            AddButton.updateLocation(x, y);
+            AddButton.HoverText = CurrentTab == PortFilterType.REQUESTS ? "New Request" : "New Provider";
+            y += AddButton.Height + margin;
+
+            ScrollMax = Math.Max(0, y - contentTop - contentHeight);
         }
+
+        private void ScrollUp()
+        {
+            receiveScrollWheelAction(kScrollAmount);
+        }
+
+        private void ScrollDown()
+        {
+            receiveScrollWheelAction(-kScrollAmount);
+        }
+
     }
 }
