@@ -17,30 +17,32 @@ namespace Tubes
 {
     internal delegate void PortFilterDeleted(PortFilter filter);
 
+    internal enum PortFilterType
+    {
+        REQUESTS, PROVIDES
+    }
+
     internal class PortFilterComponent
     {
         // toggle button for request/provide
         internal readonly PortFilter Filter;
         internal readonly DropdownComponent Dropdown;
-        internal readonly PortFilterDeleted OnDeleted;
-        internal readonly ClickableTextureComponent DeleteButton;
+        internal readonly ButtonComponent DeleteButton;
 
-        internal PortFilterComponent(PortFilter filter, PortFilterDeleted onDeleted)
+        internal PortFilterComponent(PortFilter filter, PortFilterType type, PortFilterDeleted onDeleted)
         {
             this.Filter = filter;
-            this.OnDeleted = onDeleted;
 
             int selected = 0;
             if (ItemHelper.NumToCategory.TryGetValue(this.Filter.category, out string category))
                 selected = ItemHelper.Categories.IndexOf(category);
 
-            this.Dropdown = new DropdownComponent(ItemHelper.Categories, "Category", 300) { visible = true, SelectionIndex = selected };
+            this.Dropdown = new DropdownComponent(ItemHelper.Categories, "", 300) { visible = true, SelectionIndex = selected };
             this.Dropdown.DropDownOptionSelected += DropDownOptionSelected;
 
-            int scale = 2;
-            this.DeleteButton = new ClickableTextureComponent(Sprites.Icons.Cancel, Sprites.Icons.Sheet, Sprites.Icons.Cancel, scale);
-            this.DeleteButton.bounds.Width *= scale;
-            this.DeleteButton.bounds.Height *= scale;
+            this.DeleteButton = new ButtonComponent("", Sprites.Icons.Sheet, Sprites.Icons.Clear, 2, true) { visible = true, HoverText = "Delete" };
+            this.DeleteButton.ButtonPressed += () => onDeleted(Filter);
+            // if REQUESTS, add textbox
         }
 
         internal void DropDownOptionSelected(int selected)
@@ -51,17 +53,17 @@ namespace Tubes
 
         public bool receiveLeftClick(int x, int y, bool playSound = true)
         {
+            Dropdown.receiveLeftClick(x, y, playSound);
             if (DeleteButton.containsPoint(x, y)) {
-                OnDeleted(Filter);
+                DeleteButton.receiveLeftClick(x, y, playSound);
                 return true;
             }
-            Dropdown.receiveLeftClick(x, y, playSound);
             return false;
         }
 
         public void performHoverAction(int x, int y)
         {
-            DeleteButton.tryHover(x, y, maxScaleIncrease: 0.2f);
+            DeleteButton.performHoverAction(x, y);
         }
     }
 
@@ -70,20 +72,22 @@ namespace Tubes
         internal List<PortFilter> Filters;
         internal List<PortFilterComponent> Components = new List<PortFilterComponent>();
         internal Action OnChanged;
+        internal PortFilterType Type;
 
-        internal PortFiltersModel(List<PortFilter> filters, Action onChanged)
+        internal PortFiltersModel(List<PortFilter> filters, Action onChanged, PortFilterType type)
         {
             this.Filters = filters;
             this.OnChanged = onChanged;
+            this.Type = type;
             foreach (var filter in Filters)
-                Components.Add(new PortFilterComponent(filter, FilterDeleted));
+                Components.Add(new PortFilterComponent(filter, Type, FilterDeleted));
         }
 
         internal void FilterAdded()
         {
             PortFilter filter = new PortFilter();
             Filters.Add(filter);
-            Components.Add(new PortFilterComponent(filter, FilterDeleted));
+            Components.Add(new PortFilterComponent(filter, Type, FilterDeleted));
             OnChanged();
         }
 
@@ -107,6 +111,9 @@ namespace Tubes
         /// <summary>The aspect ratio of the page background.</summary>
         private readonly Vector2 AspectRatio = new Vector2(Sprites.Letter.Sprite.Width, Sprites.Letter.Sprite.Height);
 
+        private readonly ButtonComponent RequestsTabButton;
+        private readonly ButtonComponent ProvidesTabButton;
+
         /// <summary>The clickable 'scroll up' icon.</summary>
         private readonly ClickableTextureComponent ScrollUpButton;
 
@@ -115,31 +122,35 @@ namespace Tubes
 
         private readonly ButtonComponent AddButton;
 
-        private PortFiltersModel Model;
+        private PortFilterType CurrentTab = PortFilterType.REQUESTS;
+
+        private PortFiltersModel RequestsModel;
+        private PortFiltersModel ProvidesModel;
+        private PortFiltersModel Model { get => CurrentTab == PortFilterType.REQUESTS ? RequestsModel : ProvidesModel; }
         private List<PortFilterComponent> Filters { get => Model.Components; }
 
-        public PortMenu(List<PortFilter> filters)
+        public PortMenu(List<PortFilter> requests, List<PortFilter> provides)
         {
             // add scroll buttons
             this.ScrollUpButton = new ClickableTextureComponent(Rectangle.Empty, Sprites.Icons.Sheet, Sprites.Icons.UpArrow, 1);
             this.ScrollDownButton = new ClickableTextureComponent(Rectangle.Empty, Sprites.Icons.Sheet, Sprites.Icons.DownArrow, 1);
 
-            this.Model = new PortFiltersModel(filters, UpdateLayout);
+            RequestsModel = new PortFiltersModel(requests, UpdateLayout, PortFilterType.REQUESTS);
+            ProvidesModel = new PortFiltersModel(provides, UpdateLayout, PortFilterType.PROVIDES);
 
-            this.AddButton = new ButtonComponent("New request", OptionActionType.ADD, true) { visible = true };
-            this.AddButton.ButtonPressed += Model.FilterAdded;
+            this.RequestsTabButton = new ButtonComponent("", Sprites.Icons.Sheet, Sprites.Icons.DownArrow, 1, true) { visible = true, HoverText = "Requests" };
+            this.RequestsTabButton.ButtonPressed += () => { CurrentTab = PortFilterType.REQUESTS; UpdateLayout(); };
+            this.ProvidesTabButton = new ButtonComponent("", Sprites.Icons.Sheet, Sprites.Icons.UpArrow, 1, true) { visible = true, HoverText = "Provides" };
+            this.ProvidesTabButton.ButtonPressed += () => { CurrentTab = PortFilterType.PROVIDES; UpdateLayout(); };
+            this.AddButton = new ButtonComponent("", Sprites.Icons.Sheet, Sprites.Icons.GreenPlus, 3, true) { visible = true };
+            this.AddButton.ButtonPressed += () => { Model.FilterAdded(); };
 
             this.UpdateLayout();
         }
 
-        internal void DropDownOptionSelected(int selected)
-        {
-            TubesMod._monitor.Log($"dropdown selected {selected}");
-        }
-
         public override void receiveLeftClick(int x, int y, bool playSound = true)
         {
-            if (!this.isWithinBounds(x, y)) {
+            if (!this.isWithinBounds(x, y) && !RequestsTabButton.containsPoint(x, y) && !ProvidesTabButton.containsPoint(x, y)) {
                 foreach (var filter in this.Filters)
                     filter.Dropdown.releaseLeftClick(x, y);
                 this.exitThisMenu();
@@ -148,9 +159,11 @@ namespace Tubes
 
             foreach (var filter in this.Filters) {
                 if (filter.receiveLeftClick(x, y, playSound))
-                    return;
+                    return;  // stop processing when a filter is clicked, because it may modify Filters.
             }
 
+            RequestsTabButton.receiveLeftClick(x, y, playSound);
+            ProvidesTabButton.receiveLeftClick(x, y, playSound);
             AddButton.receiveLeftClick(x, y, playSound);
         }
 
@@ -171,6 +184,8 @@ namespace Tubes
             foreach (var filter in this.Filters)
                 filter.performHoverAction(x, y);
             AddButton.performHoverAction(x, y);
+            ProvidesTabButton.performHoverAction(x, y);
+            RequestsTabButton.performHoverAction(x, y);
         }
 
         public override void receiveRightClick(int x, int y, bool playSound = true) { }
@@ -213,6 +228,9 @@ namespace Tubes
         public override void draw(SpriteBatch spriteBatch)
         {
             TubesMod._monitor.InterceptErrors("drawing the lookup info", () => {
+                int x = this.xPositionOnScreen;
+                int y = this.yPositionOnScreen;
+
                 // draw background
                 // (This uses a separate sprite batch because it needs to be drawn before the
                 // foreground batch, and we can't use the foreground batch because the background is
@@ -220,11 +238,11 @@ namespace Tubes
                 using (SpriteBatch backgroundBatch = new SpriteBatch(Game1.graphics.GraphicsDevice)) {
                     backgroundBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, SamplerState.PointClamp, null, null);
                     IClickableMenu.drawTextureBox(backgroundBatch, Game1.menuTexture, kMenuTextureSourceRect, this.xPositionOnScreen, this.yPositionOnScreen, width, height, Color.White);
+                    RequestsTabButton.draw(backgroundBatch, x, y - RequestsTabButton.Height);
+                    ProvidesTabButton.draw(backgroundBatch, x + RequestsTabButton.Width + 16, y - RequestsTabButton.Height);
                     backgroundBatch.End();
                 }
 
-                int x = this.xPositionOnScreen;
-                int y = this.yPositionOnScreen;
                 const int gutter = 15;
                 float contentWidth = this.width - gutter * 2;
                 float contentHeight = this.height - gutter * 2;
@@ -357,13 +375,13 @@ namespace Tubes
             // update filters
             foreach (PortFilterComponent filter in this.Filters) {
                 filter.Dropdown.updateLocation(x, y, kDropdownWidth);
-                int yMid = Math.Max(0, (filter.Dropdown.Height - filter.DeleteButton.bounds.Height) / 2);
-                filter.DeleteButton.bounds.X = x + filter.Dropdown.Width + margin;
-                filter.DeleteButton.bounds.Y = y + yMid;
+                int yMid = Math.Max(0, (filter.Dropdown.Height - filter.DeleteButton.Height) / 2);
+                filter.DeleteButton.updateLocation(x + filter.Dropdown.Width + margin, y + yMid);
                 y += filter.Dropdown.Height + margin;
             }
 
             this.AddButton.updateLocation(x, y);
+            this.AddButton.HoverText = CurrentTab == PortFilterType.REQUESTS ? "New Request" : "New Provider";
         }
 
         /// <summary>The method invoked when an unhandled exception is intercepted.</summary>
@@ -414,7 +432,7 @@ namespace Tubes
             public static readonly Rectangle GreenPlus = new Rectangle(0, 410, 16, 16);
 
             /// <summary>A no-smoking circle, minus the cigarette.</summary>
-            public static readonly Rectangle Cancel = new Rectangle(322, 498, 12, 12);
+            public static readonly Rectangle Clear = new Rectangle(322, 498, 12, 12);
         }
 
         /// <summary>A blank pixel which can be colorised and stretched to draw geometric shapes.</summary>

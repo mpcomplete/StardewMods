@@ -50,9 +50,8 @@ namespace Tubes
         public CustomObjectData data { get => objectData; }
 
         internal Chest attachedChest;
-        internal List<PortFilter> filters = new List<PortFilter>();
-        internal IEnumerable<PortFilter> provides { get => filters.Where(f => f.isProvider);  }
-        internal IEnumerable<PortFilter> requests { get => filters.Where(f => f.requestAmount > 0);  }
+        internal List<PortFilter> provides = new List<PortFilter>();
+        internal List<PortFilter> requests = new List<PortFilter>();
 
         public PortObject()
         {
@@ -74,7 +73,8 @@ namespace Tubes
                 { "tileLocation", tileLocation.X + "," + tileLocation.Y },
                 { "name", name },
                 { "stack", stack.ToString() },
-                { "filters", JsonConvert.SerializeObject(this.filters) },
+                { "provides", JsonConvert.SerializeObject(this.provides) },
+                { "requests", JsonConvert.SerializeObject(this.requests) },
             };
         }
 
@@ -88,8 +88,10 @@ namespace Tubes
             tileLocation = additionalSaveData["tileLocation"].Split(',').Select((i) => i.toInt()).ToList().toVector<Vector2>();
             name = additionalSaveData["name"];
             stack = additionalSaveData["stack"].toInt();
-            if (additionalSaveData.TryGetValue("filters", out string filtersJson))
-                filters = JsonConvert.DeserializeObject<List<PortFilter>>(filtersJson);
+            if (additionalSaveData.TryGetValue("provides", out string json))
+                provides = JsonConvert.DeserializeObject<List<PortFilter>>(json);
+            if (additionalSaveData.TryGetValue("requests", out json))
+                requests = JsonConvert.DeserializeObject<List<PortFilter>>(json);
         }
 
         public override Item getOne()
@@ -117,8 +119,8 @@ namespace Tubes
 
         public override bool clicked(StardewValley.Farmer who)
         {
-            Game1.activeClickableMenu = new PortMenu(this.filters);
-            string json = JsonConvert.SerializeObject(this.filters);
+            Game1.activeClickableMenu = new PortMenu(requests, provides);
+            string json = JsonConvert.SerializeObject(this.requests);
             List<PortFilter> andBack = JsonConvert.DeserializeObject<List<PortFilter>>(json);
             return false;
         }
