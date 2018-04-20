@@ -9,6 +9,7 @@ using PyTK.Extensions;
 using StardewValley.Tools;
 using System.Linq;
 using SObject = StardewValley.Object;
+using Newtonsoft.Json;
 
 namespace Tubes
 {
@@ -16,8 +17,11 @@ namespace Tubes
     // into the attached chest.
     internal class PortFilter
     {
+        [JsonProperty]
         internal int category = ItemCategories.Fruits;
+        [JsonProperty]
         internal int requestAmount = 0;  // negative means it's a provider
+
         internal bool isProvider { get => requestAmount < 0; }
     }
 
@@ -66,7 +70,12 @@ namespace Tubes
 
         public Dictionary<string, string> getAdditionalSaveData()
         {
-            return new Dictionary<string, string>() { { "tileLocation", tileLocation.X + "," + tileLocation.Y }, { "name", name }, { "stack", stack.ToString() } };
+            return new Dictionary<string, string>() {
+                { "tileLocation", tileLocation.X + "," + tileLocation.Y },
+                { "name", name },
+                { "stack", stack.ToString() },
+                { "filters", JsonConvert.SerializeObject(this.filters) },
+            };
         }
 
         public object getReplacement()
@@ -79,6 +88,8 @@ namespace Tubes
             tileLocation = additionalSaveData["tileLocation"].Split(',').Select((i) => i.toInt()).ToList().toVector<Vector2>();
             name = additionalSaveData["name"];
             stack = additionalSaveData["stack"].toInt();
+            if (additionalSaveData.TryGetValue("filters", out string filtersJson))
+                filters = JsonConvert.DeserializeObject<List<PortFilter>>(filtersJson);
         }
 
         public override Item getOne()
@@ -106,21 +117,9 @@ namespace Tubes
 
         public override bool clicked(StardewValley.Farmer who)
         {
-            //if (filters.Length == 2) {
-            //    filters = new PortFilter[] {
-            //        new PortFilter() { category = -79, requestAmount = -1 }
-            //    };
-            //    Game1.showRedMessage("Providing fruits.");
-            //} else {
-            //    filters = new PortFilter[] {
-            //        new PortFilter() { category = -79, requestAmount = 200 },
-            //        new PortFilter() { category = -26, requestAmount = -1 },
-            //    };
-            //    Game1.showRedMessage("Requesting 200 fruits, providing craftables.");
-            //}
-
             Game1.activeClickableMenu = new PortMenu(this.filters);
-
+            string json = JsonConvert.SerializeObject(this.filters);
+            List<PortFilter> andBack = JsonConvert.DeserializeObject<List<PortFilter>>(json);
             return false;
         }
 
