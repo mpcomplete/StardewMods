@@ -115,11 +115,12 @@ namespace Tubes
             return false;
         }
 
-        public override bool clicked(StardewValley.Farmer who)
+        public override bool checkForAction(StardewValley.Farmer who, bool justCheckingForActivity = false)
         {
-            Game1.activeClickableMenu = new PortMenu(requests, provides);
-            string json = JsonConvert.SerializeObject(this.requests);
-            List<PortFilter> andBack = JsonConvert.DeserializeObject<List<PortFilter>>(json);
+            if (!justCheckingForActivity) {
+                Game1.activeClickableMenu = new PortMenu(requests, provides);
+                Game1.playSound("bigSelect");
+            }
             return false;
         }
 

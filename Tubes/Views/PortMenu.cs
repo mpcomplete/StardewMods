@@ -171,6 +171,7 @@ namespace Tubes
             Filters.RemoveAt(index);
             Components.RemoveAt(index);
             OnChanged();
+            Game1.playSound("hammer");
         }
     }
 
