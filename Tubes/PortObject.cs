@@ -20,7 +20,7 @@ namespace Tubes
         [JsonProperty]
         internal int category = ItemCategories.Fruits;
         [JsonProperty]
-        internal int requestAmount = 0;  // negative means it's a provider
+        internal int requestAmount = int.MaxValue;  // negative means it's a provider
 
         internal bool isProvider { get => requestAmount < 0; }
     }

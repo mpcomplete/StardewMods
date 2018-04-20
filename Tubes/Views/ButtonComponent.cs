@@ -97,7 +97,7 @@ namespace Tubes
         private void drawTooltip(SpriteFont font, string description)
         {
             Vector2 stringLength = font.MeasureString(description);
-            int width = (int)stringLength.X + Game1.tileSize / 2 + 40;
+            int width = (int)stringLength.X + Game1.tileSize / 2;
             int height = (int)stringLength.Y + Game1.tileSize / 3 + 5;
 
             int x = (int)(Mouse.GetState().X / Game1.options.zoomLevel) + Game1.tileSize / 2;

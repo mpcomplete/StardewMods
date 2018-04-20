@@ -28,6 +28,7 @@ namespace Tubes
         internal readonly PortFilter Filter;
         internal readonly DropdownComponent Dropdown;
         internal readonly ButtonComponent DeleteButton;
+        internal ButtonComponent RequestAllToggle;
         internal SliderComponent RequestAmountSlider;
         internal bool RequestAmountChanged = false;
 
@@ -54,10 +55,18 @@ namespace Tubes
 
         private void BuildSlider()
         {
-            int min = Math.Max(0, 100 * (int)((Filter.requestAmount-1) / 100));
-            this.RequestAmountSlider = new SliderComponent("Amount", Math.Max(1, min), min + 101, 1, Filter.requestAmount, true, RequestAmountSlider?.X ?? 0, RequestAmountSlider?.Y ?? 0) { visible = true };
-            this.RequestAmountSlider.SliderValueChanged += (v) => { Filter.requestAmount = (int)v; RequestAmountChanged = true; };
-            this.RequestAmountChanged = false;
+            if (Filter.requestAmount == int.MaxValue) {
+                this.RequestAllToggle = new ButtonComponent("Until full", Sprites.Icons.Sheet, Sprites.Icons.Set, 2, true) { visible = true, HoverText = "Click to request a specific amount" };
+                this.RequestAllToggle.ButtonPressed += () => { Filter.requestAmount = 1; BuildSlider(); };
+                this.RequestAmountSlider = null;
+            } else {
+                int min = Math.Max(0, 100 * (int)((Filter.requestAmount - 1) / 100));
+                this.RequestAmountSlider = new SliderComponent("Amount", Math.Max(1, min), min + 101, 1, Filter.requestAmount, true, RequestAmountSlider?.X ?? 0, RequestAmountSlider?.Y ?? 0) { visible = true };
+                this.RequestAmountSlider.SliderValueChanged += (v) => { Filter.requestAmount = (int)v; RequestAmountChanged = true; };
+                this.RequestAmountChanged = false;
+                this.RequestAllToggle = null;
+            }
+            UpdateLayout(Dropdown.X, Dropdown.Y, Width, Height);
         }
 
         internal void DropDownOptionSelected(int selected)
@@ -70,6 +79,7 @@ namespace Tubes
         {
             Dropdown.receiveLeftClick(x, y, playSound);
             RequestAmountSlider?.receiveLeftClick(x, y, playSound);
+            RequestAllToggle?.receiveLeftClick(x, y, playSound);
             if (DeleteButton.containsPoint(x, y)) {
                 DeleteButton.receiveLeftClick(x, y, playSound);
                 return true;
@@ -93,13 +103,15 @@ namespace Tubes
 
         public void performHoverAction(int x, int y)
         {
+            RequestAllToggle?.performHoverAction(x, y);
             DeleteButton.performHoverAction(x, y);
         }
 
         public void draw(SpriteBatch b) {
             Dropdown.draw(Dropdown.IsActiveComponent() ? Game1.spriteBatch : b);
-            DeleteButton.draw(b);
+            RequestAllToggle?.draw(b);
             RequestAmountSlider?.draw(b);
+            DeleteButton.draw(b);
         }
 
         public void UpdateLayout(int x, int y, int width, int height)
@@ -115,6 +127,10 @@ namespace Tubes
                 yMid = Math.Max(0, (Dropdown.Height - RequestAmountSlider.Height) / 2);
                 RequestAmountSlider.updateLocation(xpos, y + yMid);
                 xpos += RequestAmountSlider.Width + margin;
+            } else if (RequestAllToggle != null) {
+                yMid = Math.Max(0, (Dropdown.Height - RequestAllToggle.Height) / 2);
+                RequestAllToggle.updateLocation(xpos, y + yMid);
+                xpos += RequestAllToggle.Width + margin;
             }
 
             yMid = Math.Max(0, (Dropdown.Height - DeleteButton.Height) / 2);
@@ -487,6 +503,9 @@ namespace Tubes
 
             /// <summary>A no-smoking circle, minus the cigarette.</summary>
             public static readonly Rectangle Clear = new Rectangle(322, 498, 12, 12);
+
+            /// <summary>A no-smoking circle, minus the cigarette.</summary>
+            public static readonly Rectangle Set = OptionsInputListener.setButtonSource;
         }
 
         /// <summary>A blank pixel which can be colorised and stretched to draw geometric shapes.</summary>
