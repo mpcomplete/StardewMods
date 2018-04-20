@@ -31,6 +31,9 @@ namespace Tubes
         internal SliderComponent RequestAmountSlider;
         internal bool RequestAmountChanged = false;
 
+        public int Width;
+        public int Height;
+
         internal PortFilterComponent(PortFilter filter, PortFilterType type, PortFilterDeleted onDeleted)
         {
             this.Filter = filter;
@@ -45,9 +48,8 @@ namespace Tubes
             this.DeleteButton = new ButtonComponent("", Sprites.Icons.Sheet, Sprites.Icons.Clear, 2, true) { visible = true, HoverText = "Delete" };
             this.DeleteButton.ButtonPressed += () => onDeleted(Filter);
 
-            if (type == PortFilterType.REQUESTS) {
+            if (type == PortFilterType.REQUESTS)
                 BuildSlider();
-            }
         }
 
         private void BuildSlider()
@@ -92,6 +94,34 @@ namespace Tubes
         public void performHoverAction(int x, int y)
         {
             DeleteButton.performHoverAction(x, y);
+        }
+
+        public void draw(SpriteBatch b) {
+            Dropdown.draw(Dropdown.IsActiveComponent() ? Game1.spriteBatch : b);
+            DeleteButton.draw(b);
+            RequestAmountSlider?.draw(b);
+        }
+
+        public void UpdateLayout(int x, int y, int width, int height)
+        {
+            int margin = 24;
+
+            int xpos = x;
+            Dropdown.updateLocation(xpos, y, 300);
+            xpos += Dropdown.Width + margin;
+
+            int yMid;
+            if (RequestAmountSlider != null) {
+                yMid = Math.Max(0, (Dropdown.Height - RequestAmountSlider.Height) / 2);
+                RequestAmountSlider.updateLocation(xpos, y + yMid);
+                xpos += RequestAmountSlider.Width + margin;
+            }
+
+            yMid = Math.Max(0, (Dropdown.Height - DeleteButton.Height) / 2);
+            DeleteButton.updateLocation(x + width - DeleteButton.Width, y + yMid);
+
+            Width = width;
+            Height = Dropdown.Height;
         }
     }
 
@@ -285,11 +315,8 @@ namespace Tubes
 
                     this.AddButton.draw(contentBatch);
 
-                    foreach (var filter in this.Filters.Reverse<PortFilterComponent>()) {
-                        filter.Dropdown.draw(filter.Dropdown.IsActiveComponent() ? Game1.spriteBatch : contentBatch);
-                        filter.DeleteButton.draw(contentBatch);
-                        filter.RequestAmountSlider?.draw(contentBatch);
-                    }
+                    foreach (var filter in this.Filters.Reverse<PortFilterComponent>())
+                        filter.draw(contentBatch);
 
                     contentBatch.End();
                 }
@@ -403,22 +430,8 @@ namespace Tubes
 
             // update filters
             foreach (PortFilterComponent filter in this.Filters) {
-                int xpos = x;
-
-                filter.Dropdown.updateLocation(xpos, y, kDropdownWidth);
-                xpos += filter.Dropdown.Width + margin;
-
-                int yMid;
-                if (filter.RequestAmountSlider != null) {
-                    yMid = Math.Max(0, (filter.Dropdown.Height - filter.RequestAmountSlider.Height) / 2);
-                    filter.RequestAmountSlider.updateLocation(xpos, y + yMid);
-                    xpos += filter.RequestAmountSlider.Width + margin;
-                }
-
-                yMid = Math.Max(0, (filter.Dropdown.Height - filter.DeleteButton.Height) / 2);
-                filter.DeleteButton.updateLocation(this.xPositionOnScreen + this.width - filter.DeleteButton.Width - margin, y + yMid);
-
-                y += filter.Dropdown.Height + margin;
+                filter.UpdateLayout(x, y, width - margin * 2, height - margin * 2);
+                y += filter.Height + margin;
             }
 
             this.AddButton.updateLocation(x, y);
