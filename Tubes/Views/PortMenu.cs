@@ -15,7 +15,7 @@ using StardewValley.Menus;
 
 namespace Tubes
 {
-    internal delegate void PortFilterDeleted(PortFilter filter);
+    internal delegate void PortDeleteFilter(PortFilter filter);
 
     internal enum PortFilterType
     {
@@ -32,10 +32,10 @@ namespace Tubes
         internal SliderComponent RequestAmountSlider;
         internal bool RequestAmountChanged = false;
 
-        public int Width;
-        public int Height;
+        public int Width { get; private set; }
+        public int Height { get; private set; }
 
-        internal PortFilterComponent(PortFilter filter, PortFilterType type, PortFilterDeleted onDeleted)
+        internal PortFilterComponent(PortFilter filter, PortFilterType type, PortDeleteFilter onDeleted)
         {
             this.Filter = filter;
 
@@ -141,31 +141,31 @@ namespace Tubes
         }
     }
 
-    internal class PortFiltersModel
+    internal class PortFiltersPage
     {
         internal List<PortFilter> Filters;
         internal List<PortFilterComponent> Components = new List<PortFilterComponent>();
         internal Action OnChanged;
         internal PortFilterType Type;
 
-        internal PortFiltersModel(List<PortFilter> filters, Action onChanged, PortFilterType type)
+        internal PortFiltersPage(List<PortFilter> filters, Action onChanged, PortFilterType type)
         {
             this.Filters = filters;
             this.OnChanged = onChanged;
             this.Type = type;
             foreach (var filter in Filters)
-                Components.Add(new PortFilterComponent(filter, Type, FilterDeleted));
+                Components.Add(new PortFilterComponent(filter, Type, DeleteFilter));
         }
 
-        internal void FilterAdded()
+        internal void AddFilter()
         {
             PortFilter filter = new PortFilter();
             Filters.Add(filter);
-            Components.Add(new PortFilterComponent(filter, Type, FilterDeleted));
+            Components.Add(new PortFilterComponent(filter, Type, DeleteFilter));
             OnChanged();
         }
 
-        internal void FilterDeleted(PortFilter filter)
+        internal void DeleteFilter(PortFilter filter)
         {
             int index = Filters.IndexOf(filter);
             Filters.RemoveAt(index);
@@ -179,29 +179,23 @@ namespace Tubes
     {
         internal static readonly Rectangle kMenuTextureSourceRect = new Rectangle(0, 256, 60, 60);
 
-        /// <summary>A callback which shows a new lookup for a given subject.</summary>
-        //private readonly Action<ISubject> ShowNewPage;
-
         /// <summary>The aspect ratio of the page background.</summary>
         private readonly Vector2 AspectRatio = new Vector2(Sprites.Letter.Sprite.Width, Sprites.Letter.Sprite.Height);
 
         private readonly ButtonComponent RequestsTabButton;
         private readonly ButtonComponent ProvidesTabButton;
 
-        /// <summary>The clickable 'scroll up' icon.</summary>
-        private readonly ClickableTextureComponent ScrollUpButton;
-
-        /// <summary>The clickable 'scroll down' icon.</summary>
-        private readonly ClickableTextureComponent ScrollDownButton;
-
         private readonly ButtonComponent AddButton;
+
+        private readonly ClickableTextureComponent ScrollUpButton;
+        private readonly ClickableTextureComponent ScrollDownButton;
 
         private PortFilterType CurrentTab = PortFilterType.REQUESTS;
 
-        private PortFiltersModel RequestsModel;
-        private PortFiltersModel ProvidesModel;
-        private PortFiltersModel Model { get => CurrentTab == PortFilterType.REQUESTS ? RequestsModel : ProvidesModel; }
-        private List<PortFilterComponent> Filters { get => Model.Components; }
+        private PortFiltersPage RequestsPage;
+        private PortFiltersPage ProvidesPage;
+        private PortFiltersPage Page { get => CurrentTab == PortFilterType.REQUESTS ? RequestsPage : ProvidesPage; }
+        private List<PortFilterComponent> Filters { get => Page.Components; }
 
         public PortMenu(List<PortFilter> requests, List<PortFilter> provides)
         {
@@ -209,15 +203,15 @@ namespace Tubes
             this.ScrollUpButton = new ClickableTextureComponent(Rectangle.Empty, Sprites.Icons.Sheet, Sprites.Icons.UpArrow, 1);
             this.ScrollDownButton = new ClickableTextureComponent(Rectangle.Empty, Sprites.Icons.Sheet, Sprites.Icons.DownArrow, 1);
 
-            RequestsModel = new PortFiltersModel(requests, UpdateLayout, PortFilterType.REQUESTS);
-            ProvidesModel = new PortFiltersModel(provides, UpdateLayout, PortFilterType.PROVIDES);
+            RequestsPage = new PortFiltersPage(requests, UpdateLayout, PortFilterType.REQUESTS);
+            ProvidesPage = new PortFiltersPage(provides, UpdateLayout, PortFilterType.PROVIDES);
 
             this.RequestsTabButton = new ButtonComponent("", Sprites.Icons.Sheet, Sprites.Icons.DownArrow, 1, true) { visible = true, HoverText = "Requests" };
             this.RequestsTabButton.ButtonPressed += () => { CurrentTab = PortFilterType.REQUESTS; UpdateLayout(); };
             this.ProvidesTabButton = new ButtonComponent("", Sprites.Icons.Sheet, Sprites.Icons.UpArrow, 1, true) { visible = true, HoverText = "Provides" };
             this.ProvidesTabButton.ButtonPressed += () => { CurrentTab = PortFilterType.PROVIDES; UpdateLayout(); };
             this.AddButton = new ButtonComponent("", Sprites.Icons.Sheet, Sprites.Icons.GreenPlus, 3, true) { visible = true };
-            this.AddButton.ButtonPressed += () => { Model.FilterAdded(); };
+            this.AddButton.ButtonPressed += () => { Page.AddFilter(); };
 
             this.UpdateLayout();
         }
@@ -262,7 +256,9 @@ namespace Tubes
             RequestsTabButton.performHoverAction(x, y);
         }
 
-        public override void receiveRightClick(int x, int y, bool playSound = true) { }
+        public override void receiveRightClick(int x, int y, bool playSound = true)
+        {
+        }
 
         public override void receiveScrollWheelAction(int direction)
         {
@@ -297,11 +293,9 @@ namespace Tubes
             }
         }
 
-        /// <summary>Render the UI.</summary>
-        /// <param name="spriteBatch">The sprite batch being drawn.</param>
         public override void draw(SpriteBatch spriteBatch)
         {
-            TubesMod._monitor.InterceptErrors("drawing the lookup info", () => {
+            TubesMod._monitor.InterceptErrors("drawing the port filter menu", () => {
                 int x = this.xPositionOnScreen;
                 int y = this.yPositionOnScreen;
 
@@ -318,15 +312,15 @@ namespace Tubes
                 }
 
                 const int gutter = 15;
-                float contentWidth = this.width - gutter * 2;
-                float contentHeight = this.height - gutter * 2;
+                int contentWidth = this.width - gutter * 2;
+                int contentHeight = this.height - gutter * 2;
 
                 // draw foreground
                 // (This uses a separate sprite batch to set a clipping area for scrolling.)
                 using (SpriteBatch contentBatch = new SpriteBatch(Game1.graphics.GraphicsDevice)) {
                     // begin draw
                     GraphicsDevice device = Game1.graphics.GraphicsDevice;
-                    device.ScissorRectangle = new Rectangle(x + gutter, y + gutter, (int)contentWidth, (int)contentHeight);
+                    device.ScissorRectangle = new Rectangle(x + gutter, y + gutter, contentWidth, contentHeight);
                     contentBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, SamplerState.PointClamp, null, new RasterizerState { ScissorTestEnable = true });
 
                     this.AddButton.draw(contentBatch);
@@ -416,14 +410,11 @@ namespace Tubes
 
                 // draw cursor
                 this.drawMouse(Game1.spriteBatch);
-            }, this.OnDrawError);
+            }, (Exception ex) => {
+                TubesMod._monitor.InterceptErrors("handling an error in PortMenu.draw", () => this.exitThisMenu());
+            });
         }
 
-
-        /*********
-        ** Private methods
-        *********/
-        /// <summary>Update the layout dimensions based on the current game scale.</summary>
         private void UpdateLayout()
         {
             // update size
@@ -440,7 +431,7 @@ namespace Tubes
             int x = this.xPositionOnScreen + margin;
             int y = this.yPositionOnScreen + margin;
             int gutter = 3;
-            int contentHeight = (int)(this.height - gutter * 2);
+            int contentHeight = this.height - gutter * 2;
             this.ScrollUpButton.bounds = new Rectangle(x + gutter, (int)(y + contentHeight - Sprites.Icons.UpArrow.Height - gutter - Sprites.Icons.DownArrow.Height), Sprites.Icons.UpArrow.Height, Sprites.Icons.UpArrow.Width);
             this.ScrollDownButton.bounds = new Rectangle(x + gutter, (int)(y + contentHeight - Sprites.Icons.DownArrow.Height), Sprites.Icons.DownArrow.Height, Sprites.Icons.DownArrow.Width);
 
@@ -453,62 +444,5 @@ namespace Tubes
             this.AddButton.updateLocation(x, y);
             this.AddButton.HoverText = CurrentTab == PortFilterType.REQUESTS ? "New Request" : "New Provider";
         }
-
-        /// <summary>The method invoked when an unhandled exception is intercepted.</summary>
-        /// <param name="ex">The intercepted exception.</param>
-        private void OnDrawError(Exception ex)
-        {
-            TubesMod._monitor.InterceptErrors("handling an error in the lookup code", () => this.exitThisMenu());
-        }
-    }
-
-
-    /// <summary>Simplifies access to the game's sprite sheets.</summary>
-    /// <remarks>Each sprite is represented by a rectangle, which specifies the coordinates and dimensions of the image in the sprite sheet.</remarks>
-    internal static class Sprites
-    {
-        /*********
-        ** Accessors
-        *********/
-        /// <summary>Sprites used to draw a letter.</summary>
-        public static class Letter
-        {
-            /// <summary>The sprite sheet containing the letter sprites.</summary>
-            public static Texture2D Sheet => Game1.content.Load<Texture2D>("LooseSprites\\letterBG");
-
-            /// <summary>The letter background (including edges and corners).</summary>
-            public static readonly Rectangle Sprite = new Rectangle(0, 0, 320, 180);
-        }
-
-        /// <summary>Sprites used to draw icons.</summary>
-        public static class Icons
-        {
-            /// <summary>The sprite sheet containing the icon sprites.</summary>
-            public static Texture2D Sheet => Game1.mouseCursors;
-
-            /// <summary>A filled heart indicating a friendship level.</summary>
-            public static readonly Rectangle FilledHeart = new Rectangle(211, 428, 7, 6);
-
-            /// <summary>An empty heart indicating a missing friendship level.</summary>
-            public static readonly Rectangle EmptyHeart = new Rectangle(218, 428, 7, 6);
-
-            /// <summary>A down arrow for scrolling content.</summary>
-            public static readonly Rectangle DownArrow = new Rectangle(12, 76, 40, 44);
-
-            /// <summary>An up arrow for scrolling content.</summary>
-            public static readonly Rectangle UpArrow = new Rectangle(76, 72, 40, 44);
-
-            /// <summary>A green plus icon.</summary>
-            public static readonly Rectangle GreenPlus = new Rectangle(0, 410, 16, 16);
-
-            /// <summary>A no-smoking circle, minus the cigarette.</summary>
-            public static readonly Rectangle Clear = new Rectangle(322, 498, 12, 12);
-
-            /// <summary>A no-smoking circle, minus the cigarette.</summary>
-            public static readonly Rectangle Set = OptionsInputListener.setButtonSource;
-        }
-
-        /// <summary>A blank pixel which can be colorised and stretched to draw geometric shapes.</summary>
-        public static readonly Texture2D Pixel = CommonHelper.Pixel;
     }
 }

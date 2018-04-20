@@ -51,6 +51,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Utility.cs" />
     <Compile Include="Views\ButtonComponent.cs" />
     <Compile Include="Views\DropdownComponent.cs" />
     <Compile Include="Mod.cs" />
