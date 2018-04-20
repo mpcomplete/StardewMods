@@ -113,8 +113,7 @@ namespace Tubes
             spriteIndex = 0;
             spriteRotation = 0;
 
-            var terrainFeatures = location.terrainFeatures;
-            if (!terrainFeatures.ContainsKey(tileLocation)) {
+            if (!location.terrainFeatures.ContainsKey(tileLocation)) {
                 return;
             }
 
@@ -129,17 +128,18 @@ namespace Tubes
             int connections = 0;
 
             for (int i = 0; i < 4; i++) {
-                if (terrainFeatures.TryGetValue(neighborLocations[i], out TerrainFeature tf) && tf is TubeTerrain) {
+                if ((location.terrainFeatures.TryGetValue(neighborLocations[i], out TerrainFeature tf) && tf is TubeTerrain) ||
+                    (location.objects.TryGetValue(neighborLocations[i], out StardewValley.Object obj) && obj is PortObject)) {
                     neighborConnections[i] = true;
                     connections++;
                 }
             }
 
             // Just for clarity.
-            ref bool hasLeft = ref neighborConnections[0];
-            ref bool hasRight = ref neighborConnections[1];
-            ref bool hasBottom = ref neighborConnections[2];
-            ref bool hasTop = ref neighborConnections[3];
+            bool hasLeft = neighborConnections[0];
+            bool hasRight = neighborConnections[1];
+            bool hasBottom = neighborConnections[2];
+            bool hasTop = neighborConnections[3];
 
             switch (connections) {
                 case 0:
