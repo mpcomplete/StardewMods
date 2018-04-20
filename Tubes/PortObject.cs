@@ -20,9 +20,7 @@ namespace Tubes
         [JsonProperty]
         internal int category = ItemCategories.Fruits;
         [JsonProperty]
-        internal int requestAmount = int.MaxValue;  // negative means it's a provider
-
-        internal bool isProvider { get => requestAmount < 0; }
+        internal int requestAmount = int.MaxValue;  // unused for providers
     }
 
     // The Port object type. This object connects a chest to the tube network, and can be configured with
