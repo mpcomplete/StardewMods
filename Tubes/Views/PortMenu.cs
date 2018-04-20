@@ -28,6 +28,8 @@ namespace Tubes
         internal readonly PortFilter Filter;
         internal readonly DropdownComponent Dropdown;
         internal readonly ButtonComponent DeleteButton;
+        internal SliderComponent RequestAmountSlider;
+        internal bool RequestAmountChanged = false;
 
         internal PortFilterComponent(PortFilter filter, PortFilterType type, PortFilterDeleted onDeleted)
         {
@@ -42,7 +44,18 @@ namespace Tubes
 
             this.DeleteButton = new ButtonComponent("", Sprites.Icons.Sheet, Sprites.Icons.Clear, 2, true) { visible = true, HoverText = "Delete" };
             this.DeleteButton.ButtonPressed += () => onDeleted(Filter);
-            // if REQUESTS, add textbox
+
+            if (type == PortFilterType.REQUESTS) {
+                BuildSlider();
+            }
+        }
+
+        private void BuildSlider()
+        {
+            int min = Math.Max(0, 100 * (int)((Filter.requestAmount-1) / 100));
+            this.RequestAmountSlider = new SliderComponent("Amount", Math.Max(1, min), min + 101, 1, Filter.requestAmount, true, RequestAmountSlider?.X ?? 0, RequestAmountSlider?.Y ?? 0) { visible = true };
+            this.RequestAmountSlider.SliderValueChanged += (v) => { Filter.requestAmount = (int)v; RequestAmountChanged = true; };
+            this.RequestAmountChanged = false;
         }
 
         internal void DropDownOptionSelected(int selected)
@@ -54,11 +67,26 @@ namespace Tubes
         public bool receiveLeftClick(int x, int y, bool playSound = true)
         {
             Dropdown.receiveLeftClick(x, y, playSound);
+            RequestAmountSlider?.receiveLeftClick(x, y, playSound);
             if (DeleteButton.containsPoint(x, y)) {
                 DeleteButton.receiveLeftClick(x, y, playSound);
                 return true;
             }
             return false;
+        }
+
+        public void leftClickHeld(int x, int y)
+        {
+            Dropdown.leftClickHeld(x, y);
+            RequestAmountSlider?.leftClickHeld(x, y);
+        }
+
+        public void releaseLeftClick(int x, int y)
+        {
+            Dropdown.releaseLeftClick(x, y);
+            RequestAmountSlider?.releaseLeftClick(x, y);
+            if (RequestAmountChanged)
+                BuildSlider();
         }
 
         public void performHoverAction(int x, int y)
@@ -170,13 +198,13 @@ namespace Tubes
         public override void leftClickHeld(int x, int y)
         {
             foreach (var filter in this.Filters)
-                filter.Dropdown.leftClickHeld(x, y);
+                filter.leftClickHeld(x, y);
         }
 
         public override void releaseLeftClick(int x, int y)
         {
             foreach (var filter in this.Filters)
-                filter.Dropdown.releaseLeftClick(x, y);
+                filter.releaseLeftClick(x, y);
         }
 
         public override void performHoverAction(int x, int y)
@@ -260,6 +288,7 @@ namespace Tubes
                     foreach (var filter in this.Filters.Reverse<PortFilterComponent>()) {
                         filter.Dropdown.draw(filter.Dropdown.IsActiveComponent() ? Game1.spriteBatch : contentBatch);
                         filter.DeleteButton.draw(contentBatch);
+                        filter.RequestAmountSlider?.draw(contentBatch);
                     }
 
                     contentBatch.End();
@@ -374,9 +403,21 @@ namespace Tubes
 
             // update filters
             foreach (PortFilterComponent filter in this.Filters) {
-                filter.Dropdown.updateLocation(x, y, kDropdownWidth);
-                int yMid = Math.Max(0, (filter.Dropdown.Height - filter.DeleteButton.Height) / 2);
-                filter.DeleteButton.updateLocation(x + filter.Dropdown.Width + margin, y + yMid);
+                int xpos = x;
+
+                filter.Dropdown.updateLocation(xpos, y, kDropdownWidth);
+                xpos += filter.Dropdown.Width + margin;
+
+                int yMid;
+                if (filter.RequestAmountSlider != null) {
+                    yMid = Math.Max(0, (filter.Dropdown.Height - filter.RequestAmountSlider.Height) / 2);
+                    filter.RequestAmountSlider.updateLocation(xpos, y + yMid);
+                    xpos += filter.RequestAmountSlider.Width + margin;
+                }
+
+                yMid = Math.Max(0, (filter.Dropdown.Height - filter.DeleteButton.Height) / 2);
+                filter.DeleteButton.updateLocation(this.xPositionOnScreen + this.width - filter.DeleteButton.Width - margin, y + yMid);
+
                 y += filter.Dropdown.Height + margin;
             }
 
