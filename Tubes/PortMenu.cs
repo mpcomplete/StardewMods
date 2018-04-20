@@ -5,22 +5,27 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Pathoschild.Stardew.Common;
-using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Menus;
-using StardewModdingAPI.Events;
+
+// TODO:
+// - request/provide toggle? or 2 add buttons
+// - request amount
+// - scrolling
 
 namespace Tubes
 {
+    internal delegate void PortFilterDeleted(PortFilter filter);
+
     internal class PortFilterComponent
     {
         // toggle button for request/provide
-        // minus button for delete
         internal readonly PortFilter Filter;
         internal readonly DropdownComponent Dropdown;
-        internal readonly Action OnDeleted;
+        internal readonly PortFilterDeleted OnDeleted;
+        internal readonly ClickableTextureComponent DeleteButton;
 
-        internal PortFilterComponent(PortFilter filter, Action onDeleted)
+        internal PortFilterComponent(PortFilter filter, PortFilterDeleted onDeleted)
         {
             this.Filter = filter;
             this.OnDeleted = onDeleted;
@@ -31,6 +36,11 @@ namespace Tubes
 
             this.Dropdown = new DropdownComponent(ItemHelper.Categories, "Category", 300) { visible = true, SelectionIndex = selected };
             this.Dropdown.DropDownOptionSelected += DropDownOptionSelected;
+
+            int scale = 2;
+            this.DeleteButton = new ClickableTextureComponent(Sprites.Icons.Cancel, Sprites.Icons.Sheet, Sprites.Icons.Cancel, scale);
+            this.DeleteButton.bounds.Width *= scale;
+            this.DeleteButton.bounds.Height *= scale;
         }
 
         internal void DropDownOptionSelected(int selected)
@@ -38,33 +48,51 @@ namespace Tubes
             string category = ItemHelper.Categories[selected];
             this.Filter.category = ItemHelper.CategoryToNum[category];
         }
+
+        public bool receiveLeftClick(int x, int y, bool playSound = true)
+        {
+            if (DeleteButton.containsPoint(x, y)) {
+                OnDeleted(Filter);
+                return true;
+            }
+            Dropdown.receiveLeftClick(x, y, playSound);
+            return false;
+        }
+
+        public void performHoverAction(int x, int y)
+        {
+            DeleteButton.tryHover(x, y, maxScaleIncrease: 0.2f);
+        }
     }
 
     internal class PortFiltersModel
     {
         internal List<PortFilter> Filters;
         internal List<PortFilterComponent> Components = new List<PortFilterComponent>();
+        internal Action OnChanged;
 
-        internal PortFiltersModel(List<PortFilter> filters)
+        internal PortFiltersModel(List<PortFilter> filters, Action onChanged)
         {
             this.Filters = filters;
-            for (int i = 0; i < this.Filters.Count; i++) {
-                int index = i;
-                Components.Add(new PortFilterComponent(this.Filters[index], () => FilterDeleted(index)));
-            }
+            this.OnChanged = onChanged;
+            foreach (var filter in Filters)
+                Components.Add(new PortFilterComponent(filter, FilterDeleted));
         }
 
         internal void FilterAdded()
         {
-            int index = Components.Count;
-            Filters.Add(new PortFilter());
-            Components.Add(new PortFilterComponent(this.Filters[index], () => FilterDeleted(index)));
+            PortFilter filter = new PortFilter();
+            Filters.Add(filter);
+            Components.Add(new PortFilterComponent(filter, FilterDeleted));
+            OnChanged();
         }
 
-        internal void FilterDeleted(int index)
+        internal void FilterDeleted(PortFilter filter)
         {
+            int index = Filters.IndexOf(filter);
             Filters.RemoveAt(index);
             Components.RemoveAt(index);
+            OnChanged();
         }
     }
 
@@ -95,9 +123,7 @@ namespace Tubes
             this.ScrollUpButton = new ClickableTextureComponent(Rectangle.Empty, Sprites.Icons.Sheet, Sprites.Icons.UpArrow, 1);
             this.ScrollDownButton = new ClickableTextureComponent(Rectangle.Empty, Sprites.Icons.Sheet, Sprites.Icons.DownArrow, 1);
 
-            this.Model = new PortFiltersModel(filters);
-            //this.Filters = new List<PortFilterComponent>();
-            //this.Filters.Add(new PortFilterComponent(this.DropDownOptionSelected));
+            this.Model = new PortFiltersModel(filters, UpdateLayout);
 
             int scale = 2;
             this.AddButton = new ClickableTextureComponent(Sprites.Icons.GreenPlus, Sprites.Icons.Sheet, Sprites.Icons.GreenPlus, scale);
@@ -112,13 +138,6 @@ namespace Tubes
             TubesMod._monitor.Log($"dropdown selected {selected}");
         }
 
-        public void HandleAddClicked()
-        {
-            this.Model.FilterAdded();
-            //this.Filters.Add(new PortFilterComponent(this.DropDownOptionSelected));
-            this.UpdateLayout();
-        }
-
         public override void receiveLeftClick(int x, int y, bool playSound = true)
         {
             if (!this.isWithinBounds(x, y)) {
@@ -129,12 +148,13 @@ namespace Tubes
             }
 
             if (this.AddButton.containsPoint(x, y)) {
-                HandleAddClicked();
+                Model.FilterAdded();
                 return;
             }
 
             foreach (var filter in this.Filters) {
-                filter.Dropdown.receiveLeftClick(x, y, playSound);
+                if (filter.receiveLeftClick(x, y, playSound))
+                    return;
             }
         }
 
@@ -153,6 +173,8 @@ namespace Tubes
         public override void performHoverAction(int x, int y)
         {
             this.AddButton.tryHover(x, y, maxScaleIncrease: 0.2f);
+            foreach (var filter in this.Filters)
+                filter.performHoverAction(x, y);
         }
 
         public override void receiveRightClick(int x, int y, bool playSound = true) { }
@@ -221,8 +243,10 @@ namespace Tubes
 
                     this.AddButton.draw(contentBatch);
 
-                    foreach (var filter in this.Filters.Reverse<PortFilterComponent>())
-                        filter.Dropdown.draw(contentBatch);
+                    foreach (var filter in this.Filters.Reverse<PortFilterComponent>()) {
+                        filter.Dropdown.draw(filter.Dropdown.IsActiveComponent() ? Game1.spriteBatch : contentBatch);
+                        filter.DeleteButton.draw(contentBatch);
+                    }
 
                     contentBatch.End();
                 }
@@ -334,8 +358,12 @@ namespace Tubes
             this.ScrollUpButton.bounds = new Rectangle(x + gutter, (int)(y + contentHeight - Sprites.Icons.UpArrow.Height - gutter - Sprites.Icons.DownArrow.Height), Sprites.Icons.UpArrow.Height, Sprites.Icons.UpArrow.Width);
             this.ScrollDownButton.bounds = new Rectangle(x + gutter, (int)(y + contentHeight - Sprites.Icons.DownArrow.Height), Sprites.Icons.DownArrow.Height, Sprites.Icons.DownArrow.Width);
 
+            // update filters
             foreach (PortFilterComponent filter in this.Filters) {
                 filter.Dropdown.updateLocation(x, y, kDropdownWidth);
+                int yMid = Math.Max(0, (filter.Dropdown.Height - filter.DeleteButton.bounds.Height) / 2);
+                filter.DeleteButton.bounds.X = x + filter.Dropdown.Width + margin;
+                filter.DeleteButton.bounds.Y = y + yMid;
                 y += filter.Dropdown.Height + margin;
             }
 
@@ -389,6 +417,9 @@ namespace Tubes
 
             /// <summary>A green plus icon.</summary>
             public static readonly Rectangle GreenPlus = new Rectangle(0, 410, 16, 16);
+
+            /// <summary>A no-smoking circle, minus the cigarette.</summary>
+            public static readonly Rectangle Cancel = new Rectangle(322, 498, 12, 12);
         }
 
         /// <summary>A blank pixel which can be colorised and stretched to draw geometric shapes.</summary>

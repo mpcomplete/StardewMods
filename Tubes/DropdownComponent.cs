@@ -34,7 +34,7 @@ namespace Tubes
         //b.Draw(Game1.mouseCursors, new Vector2((float) (this.bounds.X + this.bounds.Width - Game1.pixelZoom * 12), (float) (this.bounds.Y)), new Rectangle?(OptionsDropDown.dropDownButtonSource), Color.Wheat * scale, 0f, Vector2.Zero, (float) Game1.pixelZoom, SpriteEffects.None, 0.981f);
 
 
-        public override int Width => dropDown.bounds.Width + dropDownButton.bounds.Width;
+        public override int Width => dropDown.bounds.Width + dropDownButton.bounds.Width + (int)Game1.dialogueFont.MeasureString(this.label).X;
         public override int Height => dropDown.bounds.Height;
         public override int X => dropDown.bounds.X;
         public override int Y => dropDown.bounds.Y;
