@@ -51,10 +51,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DropdownComponent.cs" />
+    <Compile Include="Views\ButtonComponent.cs" />
+    <Compile Include="Views\DropdownComponent.cs" />
     <Compile Include="Mod.cs" />
-    <Compile Include="OptionComponent.cs" />
-    <Compile Include="PortMenu.cs" />
+    <Compile Include="Views\OptionComponent.cs" />
+    <Compile Include="Views\PortMenu.cs" />
     <Compile Include="PortObject.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TubeNetwork.cs" />

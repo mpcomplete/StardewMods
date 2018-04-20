@@ -113,7 +113,8 @@ namespace Tubes
         /// <summary>The clickable 'scroll down' icon.</summary>
         private readonly ClickableTextureComponent ScrollDownButton;
 
-        private readonly ClickableTextureComponent AddButton;
+        private readonly ButtonComponent AddButton;
+
         private PortFiltersModel Model;
         private List<PortFilterComponent> Filters { get => Model.Components; }
 
@@ -125,10 +126,8 @@ namespace Tubes
 
             this.Model = new PortFiltersModel(filters, UpdateLayout);
 
-            int scale = 2;
-            this.AddButton = new ClickableTextureComponent(Sprites.Icons.GreenPlus, Sprites.Icons.Sheet, Sprites.Icons.GreenPlus, scale);
-            this.AddButton.bounds.Width *= scale;
-            this.AddButton.bounds.Height *= scale;
+            this.AddButton = new ButtonComponent("New request", OptionActionType.ADD, true) { visible = true };
+            this.AddButton.ButtonPressed += Model.FilterAdded;
 
             this.UpdateLayout();
         }
@@ -147,15 +146,12 @@ namespace Tubes
                 return;
             }
 
-            if (this.AddButton.containsPoint(x, y)) {
-                Model.FilterAdded();
-                return;
-            }
-
             foreach (var filter in this.Filters) {
                 if (filter.receiveLeftClick(x, y, playSound))
                     return;
             }
+
+            AddButton.receiveLeftClick(x, y, playSound);
         }
 
         public override void leftClickHeld(int x, int y)
@@ -172,9 +168,9 @@ namespace Tubes
 
         public override void performHoverAction(int x, int y)
         {
-            this.AddButton.tryHover(x, y, maxScaleIncrease: 0.2f);
             foreach (var filter in this.Filters)
                 filter.performHoverAction(x, y);
+            AddButton.performHoverAction(x, y);
         }
 
         public override void receiveRightClick(int x, int y, bool playSound = true) { }
@@ -367,8 +363,7 @@ namespace Tubes
                 y += filter.Dropdown.Height + margin;
             }
 
-            this.AddButton.bounds.X = x;
-            this.AddButton.bounds.Y = y;
+            this.AddButton.updateLocation(x, y);
         }
 
         /// <summary>The method invoked when an unhandled exception is intercepted.</summary>
