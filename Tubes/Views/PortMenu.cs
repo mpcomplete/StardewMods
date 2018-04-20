@@ -40,10 +40,10 @@ namespace Tubes
             this.Filter = filter;
 
             int selected = 0;
-            if (ItemHelper.NumToCategory.TryGetValue(this.Filter.category, out string category))
-                selected = ItemHelper.Categories.IndexOf(category);
+            if (ItemCategories.NumToName.TryGetValue(this.Filter.category, out string category))
+                selected = ItemCategories.Names.IndexOf(category);
 
-            this.Dropdown = new DropdownComponent(ItemHelper.Categories, "", 300) { visible = true, SelectionIndex = selected };
+            this.Dropdown = new DropdownComponent(ItemCategories.Names, "", 300) { visible = true, SelectionIndex = selected };
             this.Dropdown.DropDownOptionSelected += DropDownOptionSelected;
 
             this.DeleteButton = new ButtonComponent("", Sprites.Icons.Sheet, Sprites.Icons.Clear, 2, true) { visible = true, HoverText = "Delete" };
@@ -71,8 +71,8 @@ namespace Tubes
 
         internal void DropDownOptionSelected(int selected)
         {
-            string category = ItemHelper.Categories[selected];
-            this.Filter.category = ItemHelper.CategoryToNum[category];
+            string category = ItemCategories.Names[selected];
+            this.Filter.category = ItemCategories.NameToNum[category];
         }
 
         public bool receiveLeftClick(int x, int y, bool playSound = true)
@@ -352,7 +352,7 @@ namespace Tubes
         private void UpdateLayout()
         {
             this.width = Math.Min(Game1.tileSize * 16, Game1.viewport.Width);
-            this.height = Math.Min(Game1.tileSize *10, Game1.viewport.Height);
+            this.height = Math.Min(Game1.tileSize * 10, Game1.viewport.Height);
 
             Vector2 origin = Utility.getTopLeftPositionForCenteringOnScreen(this.width, this.height);
             this.xPositionOnScreen = (int)origin.X;

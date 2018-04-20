@@ -10,7 +10,7 @@ using SObject = StardewValley.Object;
 
 namespace Tubes
 {
-    
+    // Some common item categories. These values correspond to the StardewValley.Object.category field.
     public static class ItemCategories
     {
         public const int Minerals = -2;
@@ -21,13 +21,11 @@ namespace Tubes
         public const int Vegetables = -75;
         public const int Fruits = -79;
         public const int Flowers = -80;
-    }
 
-    public static class ItemHelper
-    {
-        internal static Dictionary<string, int> CategoryToNum = typeof(ItemCategories).GetFields().ToDictionary(f => f.Name, f => (int)f.GetValue(null));
-        internal static Dictionary<int, string> NumToCategory = CategoryToNum.ToDictionary(x => x.Value, x => x.Key);
-        internal static List<string> Categories = CategoryToNum.Keys.ToList();
+        // Helpers for converting between the integer values and the category name.
+        internal static Dictionary<string, int> NameToNum = typeof(ItemCategories).GetFields().ToDictionary(f => f.Name, f => (int)f.GetValue(null));
+        internal static Dictionary<int, string> NumToName = NameToNum.ToDictionary(x => x.Value, x => x.Key);
+        internal static List<string> Names = NameToNum.Keys.ToList();
     }
 
     /// <summary>Simplifies access to the game's sprite sheets.</summary>
