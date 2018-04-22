@@ -36,7 +36,7 @@ namespace Tubes
             category = "Crafting",
             price = 100,
             description = "Input/output port for a network of pneumatic tubes.",
-            crafting = "337 1",
+            crafting = "337 1 787 1",
         };
 
         internal static void init()
