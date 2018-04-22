@@ -2,6 +2,8 @@
 using Microsoft.Xna.Framework.Graphics;
 using Pathoschild.Stardew.Common;
 using StardewValley;
+using StardewValley.Buildings;
+using StardewValley.Locations;
 using StardewValley.Menus;
 using StardewValley.Objects;
 using System.Collections.Generic;
@@ -137,4 +139,40 @@ namespace Tubes
         }
     }
 
+    public class TileHelper
+    {
+        // Checks the given tile for a building (human) entrance. If there is one, returns that building.indoors.
+        internal static GameLocation TryGetBuildingEntrance(GameLocation location, Vector2 tile)
+        {
+            if (location is BuildableGameLocation buildableLocation) {
+                foreach (Building building in buildableLocation.buildings) {
+                    Vector2 doorTile = new Vector2(building.tileX + building.humanDoor.X, building.tileY + building.humanDoor.Y);
+                    if (building.indoors != null && tile == doorTile)
+                        return building.indoors;
+                }
+            }
+            return null;
+        }
+
+        // Returns all tiles within 2 spaces of the given location's warp zones. This is used for finding tube
+        // networks near door interiors.
+        internal static IEnumerable<Vector2> GetTilesNearWarps(GameLocation location)
+        {
+            Vector2[] nearbyTiles = {
+                new Vector2(0, -1),  // up
+                new Vector2(0, -2),
+                new Vector2(0, 1),   // down
+                new Vector2(0, 2),
+                new Vector2(-1, 0),  // left
+                new Vector2(-2, 0),
+                new Vector2(1, 0),   // right
+                new Vector2(2, 0),
+            };
+            foreach (Warp warp in location.warps) {
+                foreach (Vector2 dir in nearbyTiles) {
+                    yield return dir + new Vector2(warp.X, warp.Y);
+                }
+            }
+        }
+    }
 }

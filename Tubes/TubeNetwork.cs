@@ -38,7 +38,17 @@ namespace Tubes
                     ports.Add(port);
                     port.updateAttachedChest(location);
                 } else if (location.terrainFeatures.TryGetValue(tile, out TerrainFeature t) && t is TubeTerrain) {
-                    // keep searching
+                    // Keep searching.
+                } else if (TileHelper.TryGetBuildingEntrance(location, tile) is GameLocation indoors) {
+                    var visitedIndoors = new HashSet<Vector2>();
+                    foreach (Vector2 indoorTile in TileHelper.GetTilesNearWarps(indoors)) {
+                        if (TubeNetwork.getNetworkAtTile(indoors, new Vector2(indoorTile.X, indoorTile.Y), visitedIndoors) is TubeNetwork network) {
+                            ports.AddRange(network.ports);
+                            // We stop at the first one because tiles may overlap, and we don't want to double-add networks. It's not strictly correct,
+                            // but it should work as long as buildings don't have multiple entrances.
+                            break;
+                        }
+                    }
                 } else {
                     continue;
                 }

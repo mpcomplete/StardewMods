@@ -132,6 +132,9 @@ namespace Tubes
                     (location.objects.TryGetValue(neighborLocations[i], out StardewValley.Object obj) && obj is PortObject)) {
                     neighborConnections[i] = true;
                     connections++;
+                } else if (TileHelper.TryGetBuildingEntrance(location, neighborLocations[i]) is GameLocation indoors) {
+                    neighborConnections[i] = true;
+                    connections++;
                 }
             }
 
