@@ -10,6 +10,8 @@ using StardewValley.Tools;
 using System.Linq;
 using SObject = StardewValley.Object;
 using Newtonsoft.Json;
+using StardewValley.Locations;
+using StardewValley.Buildings;
 
 namespace Tubes
 {
@@ -129,9 +131,47 @@ namespace Tubes
             foreach (Vector2 adjacent in Utility.getAdjacentTileLocations(this.tileLocation)) {
                 if (location.objects.TryGetValue(adjacent, out SObject o) && o is Chest chest) {
                     this.attachedChest = chest;
-                    break;
+                    return;
+                } else if (location is BuildableGameLocation buildableLocation) {
+                    foreach (Building building in buildableLocation.buildings) {
+                        Vector2 doorTile = new Vector2(building.tileX + building.humanDoor.X, building.tileY + building.humanDoor.Y);
+                        if (building.indoors != null && adjacent == doorTile && findChestByInteriorDoor(building, out chest)) {
+                            this.attachedChest = chest;
+                            return;
+                        }
+                    }
                 }
             }
+        }
+
+        internal bool findChestByInteriorDoor(Building building, out Chest chest)
+        {
+            // check tiles withing 2 spaces of the door.
+            Vector2[] nearbyTiles = {
+                new Vector2(0, -1),  // up
+                new Vector2(0, -2),
+                new Vector2(0, 1),   // down
+                new Vector2(0, 2),
+                new Vector2(-1, 0),  // left
+                new Vector2(-2, 0),
+                new Vector2(1, 0),   // right
+                new Vector2(2, 0),
+                new Vector2(-1, -1), // 4 corners
+                new Vector2(1, 1),
+                new Vector2(1, -1),
+                new Vector2(-1, 1),
+            };
+
+            foreach (Warp warp in building.indoors.warps) {
+                foreach (Vector2 dir in nearbyTiles) {
+                    if (building.indoors.objects.TryGetValue(dir + new Vector2(warp.X, warp.Y), out SObject o) && o is Chest ochest) {
+                        chest = ochest;
+                        return true;
+                    }
+                }
+            }
+            chest = null;
+            return false;
         }
 
         internal void requestFrom(PortObject provider, PortFilter request, ref int numRequested)
