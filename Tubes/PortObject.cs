@@ -10,6 +10,8 @@ using StardewValley.Tools;
 using System.Linq;
 using SObject = StardewValley.Object;
 using Newtonsoft.Json;
+using StardewValley.Buildings;
+using StardewValley.Locations;
 
 namespace Tubes
 {
@@ -131,12 +133,22 @@ namespace Tubes
                     this.attachedChest = chest;
                     return;
                 }
+
+                if (location is BuildableGameLocation buildableLocation) {
+                    foreach (Building building in buildableLocation.buildings) {
+                        Rectangle tileArea = new Rectangle(building.tileX, building.tileY, building.tilesWide, building.tilesHigh);
+                        if (building is JunimoHut hut && tileArea.Contains((int)adjacent.X, (int)adjacent.Y)) {
+                            this.attachedChest = hut.output;
+                            return;
+                        }
+                    }
+                }
             }
         }
 
         internal void requestFrom(PortObject provider, PortFilter request, ref int numRequested)
         {
-            if (!provider.canProvide(request))
+            if (!provider.doesProvide(request) || provider.attachedChest == null)
                return;
 
             List<Item> removedItems = new List<Item>();
@@ -156,18 +168,18 @@ namespace Tubes
                 provider.attachedChest.items.Remove(item);
         }
 
-        internal bool canProvide(PortFilter request)
+        internal bool doesProvide(PortFilter request)
         {
             return this.provides.Any(p => p.category == request.category);
         }
 
         internal int amountMatching(PortFilter filter)
         {
-            return attachedChest.items.Sum(i => {
+            return attachedChest?.items.Sum(i => {
                 if (i.category == filter.category)
                     return i.Stack;
                 return 0;
-            });
+            }) ?? 0;
         }
     }
 }

@@ -72,6 +72,9 @@ namespace Tubes
 
         internal void processRequest(PortObject requestor, PortFilter request)
         {
+            if (requestor.attachedChest == null)
+                return;
+
             int amountHave = requestor.amountMatching(request);
             int amountNeeded = request.requestAmount - amountHave;
             if (amountNeeded <= 0)
