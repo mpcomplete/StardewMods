@@ -40,7 +40,7 @@ namespace Tubes
             this.Filter = filter;
 
             int selected = 0;
-            if (ItemCategories.NumToName.TryGetValue(this.Filter.category, out string category))
+            if (ItemCategories.NumToName.TryGetValue(this.Filter.Category, out string category))
                 selected = ItemCategories.Names.IndexOf(category);
 
             this.Dropdown = new DropdownComponent(ItemCategories.Names, "", 300) { visible = true, SelectionIndex = selected };
@@ -55,14 +55,14 @@ namespace Tubes
 
         private void BuildSlider()
         {
-            if (Filter.requestAmount == int.MaxValue) {
+            if (Filter.RequestAmount == int.MaxValue) {
                 this.RequestAllToggle = new ButtonComponent("Until full", Sprites.Icons.Sheet, Sprites.Icons.Set, 2, true) { visible = true, HoverText = "Click to request a specific amount" };
-                this.RequestAllToggle.ButtonPressed += () => { Filter.requestAmount = 1; BuildSlider(); };
+                this.RequestAllToggle.ButtonPressed += () => { Filter.RequestAmount = 1; BuildSlider(); };
                 this.RequestAmountSlider = null;
             } else {
-                int min = Math.Max(0, 100 * (int)((Filter.requestAmount - 1) / 100));
-                this.RequestAmountSlider = new SliderComponent("Amount", Math.Max(1, min), min + 101, 1, Filter.requestAmount, true, RequestAmountSlider?.X ?? 0, RequestAmountSlider?.Y ?? 0) { visible = true };
-                this.RequestAmountSlider.SliderValueChanged += (v) => { Filter.requestAmount = (int)v; RequestAmountChanged = true; };
+                int min = Math.Max(0, 100 * (int)((Filter.RequestAmount - 1) / 100));
+                this.RequestAmountSlider = new SliderComponent("Amount", Math.Max(1, min), min + 101, 1, Filter.RequestAmount, true, RequestAmountSlider?.X ?? 0, RequestAmountSlider?.Y ?? 0) { visible = true };
+                this.RequestAmountSlider.SliderValueChanged += (v) => { Filter.RequestAmount = (int)v; RequestAmountChanged = true; };
                 this.RequestAmountChanged = false;
                 this.RequestAllToggle = null;
             }
@@ -72,7 +72,7 @@ namespace Tubes
         internal void DropDownOptionSelected(int selected)
         {
             string category = ItemCategories.Names[selected];
-            this.Filter.category = ItemCategories.NameToNum[category];
+            this.Filter.Category = ItemCategories.NameToNum[category];
         }
 
         public bool receiveLeftClick(int x, int y, bool playSound = true)

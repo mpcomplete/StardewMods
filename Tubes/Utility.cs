@@ -81,7 +81,7 @@ namespace Tubes
     {
         // Adds `amount` of a given item to the chest. Returns the total amount added before
         // the chest ran out of room.
-        public static int addToChest(Chest chest, Item item, int amount)
+        public static int AddToChest(Chest chest, Item item, int amount)
         {
             if (amount <= 0)
                 return 0;
@@ -103,14 +103,14 @@ namespace Tubes
             // try add to empty slot
             for (int i = 0; i < Chest.capacity && i < contents.Count; i++) {
                 if (contents[i] == null) {
-                    contents[i] = ChestHelper.getStack(item, amount);
+                    contents[i] = ChestHelper.GetStack(item, amount);
                     return amount;
                 }
             }
 
             // try add new slot
             if (contents.Count < Chest.capacity) {
-                contents.Add(ChestHelper.getStack(item, amount));
+                contents.Add(ChestHelper.GetStack(item, amount));
                 return amount;
             }
 
@@ -118,7 +118,7 @@ namespace Tubes
         }
 
         // Returns a stack of `amount` of the given item.
-        private static Item getStack(Item original, int amount = 1)
+        private static Item GetStack(Item original, int amount = 1)
         {
             if (original == null)
                 return null;

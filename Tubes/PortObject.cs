@@ -20,38 +20,38 @@ namespace Tubes
     internal class PortFilter
     {
         [JsonProperty]
-        internal int category = ItemCategories.Fruits;
+        internal int Category = ItemCategories.Fruits;
         [JsonProperty]
-        internal int requestAmount = int.MaxValue;  // unused for providers
+        internal int RequestAmount = int.MaxValue;  // unused for providers
     }
 
     // The Port object type. This object connects a chest to the tube network, and can be configured with
     // filters to pull items from other chests in the network into the attached chest.
     public class PortObject : StardewValley.Object, ICustomObject, ISaveElement, IDrawFromCustomObjectData
     {
-        internal static Texture2D icon;
-        internal static CustomObjectData objectData;
+        internal static Texture2D Icon;
+        internal static CustomObjectData ObjectData;
 
-        internal static Blueprint blueprint = new Blueprint {
-            fullid = "Pneumatic Tube Port",
-            name = "Pneumatic Tube Port",
-            category = "Crafting",
-            price = 100,
-            description = "Input/output port for a network of pneumatic tubes.",
-            crafting = "337 1 787 1",
+        internal static Blueprint Blueprint = new Blueprint {
+            Fullid = "Pneumatic Tube Port",
+            Name = "Pneumatic Tube Port",
+            Category = "Crafting",
+            Price = 100,
+            Description = "Input/output port for a network of pneumatic tubes.",
+            Crafting = "337 1 787 1",
         };
 
-        internal static void init()
+        internal static void Init()
         {
-            icon = TubesMod._helper.Content.Load<Texture2D>(@"Assets/port.png");
-            objectData = blueprint.createObjectData(icon, typeof(PortObject));
+            Icon = TubesMod._helper.Content.Load<Texture2D>(@"Assets/port.png");
+            ObjectData = Blueprint.CreateObjectData(Icon, typeof(PortObject));
         }
 
-        public CustomObjectData data { get => objectData; }
+        public CustomObjectData data { get => ObjectData; }
 
-        internal Chest attachedChest;
-        internal List<PortFilter> provides = new List<PortFilter>();
-        internal List<PortFilter> requests = new List<PortFilter>();
+        internal Chest AttachedChest;
+        internal List<PortFilter> Provides = new List<PortFilter>();
+        internal List<PortFilter> Requests = new List<PortFilter>();
 
         public PortObject()
         {
@@ -73,8 +73,8 @@ namespace Tubes
                 { "tileLocation", tileLocation.X + "," + tileLocation.Y },
                 { "name", name },
                 { "stack", stack.ToString() },
-                { "provides", JsonConvert.SerializeObject(this.provides) },
-                { "requests", JsonConvert.SerializeObject(this.requests) },
+                { "provides", JsonConvert.SerializeObject(this.Provides) },
+                { "requests", JsonConvert.SerializeObject(this.Requests) },
             };
         }
 
@@ -89,9 +89,9 @@ namespace Tubes
             name = additionalSaveData["name"];
             stack = additionalSaveData["stack"].toInt();
             if (additionalSaveData.TryGetValue("provides", out string json))
-                provides = JsonConvert.DeserializeObject<List<PortFilter>>(json);
+                Provides = JsonConvert.DeserializeObject<List<PortFilter>>(json);
             if (additionalSaveData.TryGetValue("requests", out json))
-                requests = JsonConvert.DeserializeObject<List<PortFilter>>(json);
+                Requests = JsonConvert.DeserializeObject<List<PortFilter>>(json);
         }
 
         public override Item getOne()
@@ -120,17 +120,17 @@ namespace Tubes
         public override bool checkForAction(StardewValley.Farmer who, bool justCheckingForActivity = false)
         {
             if (!justCheckingForActivity) {
-                Game1.activeClickableMenu = new PortMenu(requests, provides);
+                Game1.activeClickableMenu = new PortMenu(Requests, Provides);
                 Game1.playSound("bigSelect");
             }
             return false;
         }
 
-        internal void updateAttachedChest(GameLocation location)
+        internal void UpdateAttachedChest(GameLocation location)
         {
             foreach (Vector2 adjacent in Utility.getAdjacentTileLocations(this.tileLocation)) {
                 if (location.objects.TryGetValue(adjacent, out SObject o) && o is Chest chest) {
-                    this.attachedChest = chest;
+                    this.AttachedChest = chest;
                     return;
                 }
 
@@ -138,7 +138,7 @@ namespace Tubes
                     foreach (Building building in buildableLocation.buildings) {
                         Rectangle tileArea = new Rectangle(building.tileX, building.tileY, building.tilesWide, building.tilesHigh);
                         if (building is JunimoHut hut && tileArea.Contains((int)adjacent.X, (int)adjacent.Y)) {
-                            this.attachedChest = hut.output;
+                            this.AttachedChest = hut.output;
                             return;
                         }
                     }
@@ -146,16 +146,16 @@ namespace Tubes
             }
         }
 
-        internal void requestFrom(PortObject provider, PortFilter request, ref int numRequested)
+        internal void RequestFrom(PortObject provider, PortFilter request, ref int numRequested)
         {
-            if (!provider.doesProvide(request) || provider.attachedChest == null)
+            if (!provider.DoesProvide(request) || provider.AttachedChest == null)
                return;
 
             List<Item> removedItems = new List<Item>();
-            foreach (Item item in provider.attachedChest.items) {
-                if (item.category == request.category) {
+            foreach (Item item in provider.AttachedChest.items) {
+                if (item.category == request.Category) {
                     int amountToTake = Math.Min(numRequested, item.Stack);
-                    int amountTook = ChestHelper.addToChest(this.attachedChest, item, amountToTake);
+                    int amountTook = ChestHelper.AddToChest(this.AttachedChest, item, amountToTake);
                     item.Stack -= amountTook;
                     numRequested -= amountTook;
                     if (item.Stack <= 0)
@@ -165,18 +165,18 @@ namespace Tubes
                 }
             }
             foreach (Item item in removedItems)
-                provider.attachedChest.items.Remove(item);
+                provider.AttachedChest.items.Remove(item);
         }
 
-        internal bool doesProvide(PortFilter request)
+        internal bool DoesProvide(PortFilter request)
         {
-            return this.provides.Any(p => p.category == request.category);
+            return this.Provides.Any(p => p.Category == request.Category);
         }
 
-        internal int amountMatching(PortFilter filter)
+        internal int AmountMatching(PortFilter filter)
         {
-            return attachedChest?.items.Sum(i => {
-                if (i.category == filter.category)
+            return AttachedChest?.items.Sum(i => {
+                if (i.category == filter.Category)
                     return i.Stack;
                 return 0;
             }) ?? 0;

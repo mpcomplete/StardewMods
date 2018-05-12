@@ -11,68 +11,68 @@ namespace Tubes
 {
     public class Blueprint
     {
-        public string fullid;
-        public string name;
-        public string category;
-        public int price;
-        public string description;
-        public string crafting;
+        public string Fullid;
+        public string Name;
+        public string Category;
+        public int Price;
+        public string Description;
+        public string Crafting;
 
-        public CustomObjectData createObjectData(Texture2D texture, Type type)
+        public CustomObjectData CreateObjectData(Texture2D texture, Type type)
         {
             return new CustomObjectData(
-                fullid,
-                $"{name}/{price}/-300/{category} -24/{name}/{description}",
+                Fullid,
+                $"{Name}/{Price}/-300/{Category} -24/{Name}/{Description}",
                 texture,
                 Color.White,
                 0,
                 false,
                 type,
-                crafting != null ? new CraftingData(fullid, crafting) : null);
+                Crafting != null ? new CraftingData(Fullid, Crafting) : null);
         }
     }
 
     public class JunkObject {
-        internal static Blueprint blueprint = new Blueprint {
-            fullid = "Pneumatic Tube junk",
-            name = "Pneumatic Tube junk",
-            category = "Crafting",
-            price = 100,
-            description = "Temporary internal object left behind when a tube is junked. Player shouldn't see this.",
+        internal static Blueprint Blueprint = new Blueprint {
+            Fullid = "Pneumatic Tube junk",
+            Name = "Pneumatic Tube junk",
+            Category = "Crafting",
+            Price = 100,
+            Description = "Temporary internal object left behind when a tube is junked. Player shouldn't see this.",
         };
 
         internal static CustomObjectData objectData;
 
-        internal static void init(Texture2D icon)
+        internal static void Init(Texture2D icon)
         {
-            objectData = blueprint.createObjectData(icon, null);
+            objectData = Blueprint.CreateObjectData(icon, null);
         }
     }
 
     // The Tube object type. This is used whenever the object is not placed on the ground (it's not a terrain feature).
     public class TubeObject : StardewValley.Object, ICustomObject, ISaveElement, IDrawFromCustomObjectData
     {
-        internal static Texture2D icon;
-        internal static CustomObjectData objectData;
+        internal static Texture2D Icon;
+        internal static CustomObjectData ObjectData;
 
-        internal static Blueprint blueprint = new Blueprint {
-            fullid = "Pneumatic Tube",
-            name = "Pneumatic Tube",
-            category = "Crafting",
-            price = 100,
-            description = "Connects machines together with the magic of vacuums.",
-            crafting = "337 1",
+        internal static Blueprint Blueprint = new Blueprint {
+            Fullid = "Pneumatic Tube",
+            Name = "Pneumatic Tube",
+            Category = "Crafting",
+            Price = 100,
+            Description = "Connects machines together with the magic of vacuums.",
+            Crafting = "337 1",
         };
 
-        internal static void init()
+        internal static void Init()
         {
-            icon = TubesMod._helper.Content.Load<Texture2D>(@"Assets/icon.png");
-            objectData = blueprint.createObjectData(icon, typeof(TubeObject));
+            Icon = TubesMod._helper.Content.Load<Texture2D>(@"Assets/icon.png");
+            ObjectData = Blueprint.CreateObjectData(Icon, typeof(TubeObject));
 
-            JunkObject.init(icon);
+            JunkObject.Init(Icon);
         }
 
-        public CustomObjectData data { get => objectData; }
+        public CustomObjectData data { get => ObjectData; }
 
         public TubeObject()
         {
