@@ -114,5 +114,10 @@ namespace Tubes
         {
             return new TubeObject(data);
         }
+
+        public override bool isPassable()
+        {
+            return true;
+        }
     }
 }
