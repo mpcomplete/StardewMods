@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
@@ -16,7 +17,7 @@ namespace IntravenousCoffee
         const int kWithdrawalDurationMillis = 2 * 60 * 60 * 1000; // 2 hours
         const int kBuffWhich = 998;
 
-        internal static EventHandler<EventArgsClickableMenuChanged> addtoshop;
+        internal static EventHandler<MenuChangedEventArgs> addtoshop;
 
         internal static IModHelper _helper;
         internal static IMonitor _monitor;
@@ -42,11 +43,13 @@ namespace IntravenousCoffee
                 )
             );
 
-            InputEvents.ButtonPressed += this.InputEvents_ButtonPressed;
-            GameEvents.UpdateTick += this.GameEvents_UpdateTick;
+            helper.Events.Input.ButtonPressed += InputEvents_ButtonPressed;
+            //InputEvents.ButtonPressed += this.InputEvents_ButtonPressed;
+            helper.Events.GameLoop.UpdateTicked += GameEvents_UpdateTick;
+            //GameEvents.UpdateTick += this.GameEvents_UpdateTick;
         }
 
-        private void InputEvents_ButtonPressed(object sender, EventArgsInput e)
+        private void InputEvents_ButtonPressed(object sender, ButtonPressedEventArgs e)
         {
             if (!Context.IsWorldReady)
                 return;
@@ -54,10 +57,10 @@ namespace IntravenousCoffee
             this.Monitor.InterceptErrors("handling your input", $"handling input '{e.Button}'", () => {
                 // HACK: This prevents the IV bag from being used as a tool. There must be a better way
                 // to do this.
-                if (e.IsUseToolButton
-                    && Game1.player.CurrentTool as IntravenousCoffeeTool != null
+                if (e.Button.IsUseToolButton()
+                    && Game1.player.CurrentTool is IntravenousCoffeeTool
                     && Game1.activeClickableMenu == null) {
-                    e.SuppressButton();
+                    Helper.Input.Suppress(e.Button);
                 }
             });
         }
@@ -75,7 +78,7 @@ namespace IntravenousCoffee
                 return;
 
             // Find an IV bag with coffee remaining.
-            IntravenousCoffeeTool ivTool = Game1.player.items.Find(
+            IntravenousCoffeeTool ivTool = Game1.player.Items.FirstOrDefault(
                 (i) => (i is IntravenousCoffeeTool iv && iv.hasCoffee()))
                 as IntravenousCoffeeTool;
 

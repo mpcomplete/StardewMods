@@ -17,15 +17,17 @@ namespace IntravenousCoffee
 
         public Dictionary<string, string> getAdditionalSaveData()
         {
-            Dictionary<string, string> savedata = new Dictionary<string, string>();
-            savedata.Add("name", name);
+            Dictionary<string, string> savedata = new Dictionary<string, string>
+            {
+                { "name", Name }
+            };
             return savedata;
         }
 
         public dynamic getReplacement()
         {
             Chest replacement = new Chest(true);
-            if (attachments.Count() > 0) {
+            if (attachments.Any()) {
                 if (attachments[0] != null)
                     replacement.addItem(attachments[0]);
             }
@@ -47,10 +49,7 @@ namespace IntravenousCoffee
             build();
         }
 
-        public override string Name
-        {
-            get => name;
-        }
+        public override string Name => BaseName;
 
         public override bool canBeTrashed()
         {
@@ -77,27 +76,28 @@ namespace IntravenousCoffee
         {
             if (texture == null)
                 loadTextures();
-
-            name = "IV bag";
+            
+            
+            Name = "IV bag";
             description = "Fill it with coffee to constantly inject that sweet caffeine directly into your veins. Be careful, it's addictive!";
 
-            numAttachmentSlots = 1;
-            attachments = new SObject[numAttachmentSlots];
-            initialParentTileIndex = 99;
-            currentParentTileIndex = 99;
-            indexOfMenuItemView = 0;
-            upgradeLevel = 5;
-            instantUse = false;
+            numAttachmentSlots.Value = 1;
+            attachments.SetCount(numAttachmentSlots);
+            initialParentTileIndex.Value = 99;
+            currentParentTileIndex.Value = 99;
+            indexOfMenuItemView.Value = 0;
+            upgradeLevel.Value = 5;
+            instantUse.Value = false;
         }
 
         public bool hasCoffee()
         {
-            return this.attachments[0]?.stack > 0;
+            return this.attachments[0]?.Stack > 0;
         }
 
         public void consumeCoffee()
         {
-            if (--this.attachments[0].stack == 0)
+            if (--this.attachments[0].Stack == 0)
                 this.attachments[0] = null;
         }
 
@@ -105,10 +105,19 @@ namespace IntravenousCoffee
         {
             return numAttachmentSlots;
         }
+
         
-        public override void drawInMenu(SpriteBatch spriteBatch, Vector2 location, float scaleSize, float transparency, float layerDepth, bool drawStackNumber)
+        public override void drawInMenu(
+            SpriteBatch spriteBatch,
+            Vector2 location,
+            float scaleSize,
+            float transparency,
+            float layerDepth,
+            bool drawStackNumber,
+            Color color,
+            bool drawShadow)
         {
-            spriteBatch.Draw(texture, location + new Vector2((float)(Game1.tileSize / 2), (float)(Game1.tileSize / 2)), new Rectangle?(Game1.getSquareSourceRectForNonStandardTileSheet(texture, Game1.tileSize / 4, Game1.tileSize / 4, this.indexOfMenuItemView)), Color.White * transparency, 0f, new Vector2((float)(Game1.tileSize / 4 / 2), (float)(Game1.tileSize / 4 / 2)), (float)Game1.pixelZoom * scaleSize, SpriteEffects.None, layerDepth);
+            spriteBatch.Draw(texture, location + new Vector2((float)(Game1.tileSize / 2), (float)(Game1.tileSize / 2)), new Rectangle?(Game1.getSquareSourceRectForNonStandardTileSheet(texture, Game1.tileSize / 4, Game1.tileSize / 4, this.IndexOfMenuItemView)), Color.White * transparency, 0f, new Vector2((float)(Game1.tileSize / 4 / 2), (float)(Game1.tileSize / 4 / 2)), (float)Game1.pixelZoom * scaleSize, SpriteEffects.None, layerDepth);
         }
 
         public override void drawAttachments(SpriteBatch b, int x, int y)
@@ -116,7 +125,7 @@ namespace IntravenousCoffee
             Rectangle attachementSourceRectangle = new Rectangle(0, 0, 64, 64);
             b.Draw(attTexture, new Vector2(x, y), new Rectangle?(attachementSourceRectangle), Color.White, 0.0f, Vector2.Zero, 1f, SpriteEffects.None, 0.86f);
 
-            if (attachments.Count() > 0)
+            if (attachments.Any())
             {
                 if (attachments[0] is SObject)
                     attachments[0].drawInMenu(b, new Vector2(x, y), 1f);
@@ -143,11 +152,11 @@ namespace IntravenousCoffee
             SObject priorAttachment = null;
 
             if (attachments[0] != null)
-                priorAttachment = new SObject(Vector2.Zero, attachments[0].parentSheetIndex, attachments[0].stack);
+                priorAttachment = new SObject(Vector2.Zero, attachments[0].ParentSheetIndex, attachments[0].Stack);
 
             if (o == null) {
                 if (attachments[0] != null) {
-                    priorAttachment = new SObject(Vector2.Zero, attachments[0].parentSheetIndex, attachments[0].stack);
+                    priorAttachment = new SObject(Vector2.Zero, attachments[0].ParentSheetIndex, attachments[0].Stack);
                     attachments[0] = null;
                 }
 
@@ -157,7 +166,7 @@ namespace IntravenousCoffee
 
             if (canThisBeAttached(o)) {
                 if (attachments[0] != null) {
-                    attachments[0].stack += o.stack;
+                    attachments[0].Stack += o.Stack;
                 } else {
                     attachments[0] = o;
                 }
@@ -181,7 +190,7 @@ namespace IntravenousCoffee
 
         protected override string loadDisplayName()
         {
-            return name;
+            return Name;
         }
 
         protected override string loadDescription()

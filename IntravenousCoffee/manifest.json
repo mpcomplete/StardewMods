@@ -1,14 +1,15 @@
 {
-  "Name": "IV Bag",
-  "Author": "mpcomplete",
-  "Version": "1.0",
-  "Description": "Adds an IV bag to the Game",
-  "UniqueID": "mpcomplete.IVBag",
-  "EntryDll": "IntravenousCoffee.dll",
-  "Dependencies": [
-    {
-      "UniqueID": "Platonymous.Toolkit"
-    }
-  ],
-  "UpdateKeys": [ "Nexus:1133" ]
+    "Name": "IV Bag",
+    "Author": "mpcomplete",
+    "Version": "1.0.1-unofficial.1-Mizzion",
+    "Description": "Adds an IV bag to the Game",
+    "UniqueID": "mpcomplete.IVBag",
+    "EntryDll": "IntravenousCoffee.dll",
+    "MinimumApiVersion": "2.10.2", 
+    "Dependencies": [
+        {
+            "UniqueID": "Platonymous.Toolkit"
+        }
+    ],
+    "UpdateKeys": [ "Nexus:2224" ]
 }
