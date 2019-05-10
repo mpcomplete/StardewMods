@@ -19,15 +19,15 @@ namespace mpcomplete.Stardew.QuickCraft
     public override void Entry(IModHelper helper) {
       this.Config = helper.ReadConfig<ModConfig>();
 
-      InputEvents.ButtonPressed += this.InputEvents_ButtonPressed;
+      Helper.Events.Input.ButtonPressed += this.InputEvents_ButtonPressed;
     }
 
-    private void InputEvents_ButtonPressed(object sender, EventArgsInput e) {
+    private void InputEvents_ButtonPressed(object sender, ButtonPressedEventArgs e) {
       if (!Context.IsWorldReady)
         return;
 
       this.Monitor.InterceptErrors("handling your input", $"handling input '{e.Button}'", () => {
-        if (e.IsUseToolButton && IsEnabled()) {
+        if (e.Button.IsUseToolButton() && IsEnabled()) {
           switch (Game1.activeClickableMenu) {
             case GameMenu menu: {
                 List<IClickableMenu> pages = this.Helper.Reflection.GetField<List<IClickableMenu>>(menu, "pages").GetValue();
@@ -53,13 +53,13 @@ namespace mpcomplete.Stardew.QuickCraft
                 if (didCraft)
                   Game1.playSound("Ship");
 
-                e.SuppressButton();
+                Helper.Input.Suppress(e.Button);
                 break;
               }
             case ShopMenu menu: {
                 int repeat = this.Is5x() ? 500 : 100;
                 BuyHoveredItem(menu, repeat, Game1.getMousePosition());
-                e.SuppressButton();
+                Helper.Input.Suppress(e.Button);
                 break;
               }
           }

@@ -7,7 +7,7 @@
     <ProjectGuid>{2DA0145A-032E-4A86-9C9B-B5BEBE92D2D9}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Pathoschild.Stardew.QuickCraft</RootNamespace>
+    <RootNamespace>mpcomplete.Stardew.QuickCraft</RootNamespace>
     <AssemblyName>QuickCraft</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>

@@ -9,10 +9,8 @@ using PyTK.Extensions;
 using Pathoschild.Stardew.Common;
 using Microsoft.Xna.Framework;
 
-namespace IntravenousCoffee
-{
-  public class IntravenousCoffeeMod : Mod
-  {
+namespace IntravenousCoffee {
+  public class IntravenousCoffeeMod : Mod {
     const int kCoffeeDurationMillis = (1 * 60 + 23) * 1000;  // 1:23 min
     const int kWithdrawalDurationMillis = 2 * 60 * 60 * 1000; // 2 hours
     const int kBuffWhich = 998;
@@ -22,10 +20,7 @@ namespace IntravenousCoffee
     internal static IModHelper _helper;
     internal static IMonitor _monitor;
 
-    int updateTicks = 60;
-
-    enum AddictionState
-    {
+    enum AddictionState {
       Clean,
       Addicted,
       Withdrawal
@@ -44,7 +39,7 @@ namespace IntravenousCoffee
       );
 
       Helper.Events.Input.ButtonPressed += this.InputEvents_ButtonPressed;
-      Helper.Events.GameLoop.UpdateTicked += this.GameEvents_UpdateTick;
+      Helper.Events.GameLoop.OneSecondUpdateTicked += this.GameEvents_UpdateTick;
     }
 
     private void InputEvents_ButtonPressed(object sender, ButtonPressedEventArgs e) {
@@ -63,10 +58,6 @@ namespace IntravenousCoffee
     }
 
     private void GameEvents_UpdateTick(object sender, EventArgs e) {
-      if (updateTicks-- > 0)
-        return;
-      updateTicks = 60;
-
       removeDrinkBuff(true);
 
       // Wait till the buff runs out.

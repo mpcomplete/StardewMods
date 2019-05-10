@@ -14,8 +14,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuickCraft", "QuickCraft\Qu
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IntravenousCoffee", "IntravenousCoffee\IntravenousCoffee.csproj", "{6167A791-DACF-44ED-8B4E-E08AF88D565A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Reincarnate", "Reincarnate\Reincarnate.csproj", "{19C9C6D3-59B4-4E76-B439-298ABEF97AAF}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		Common\Common.projitems*{19c9c6d3-59b4-4e76-b439-298abef97aaf}*SharedItemsImports = 4
 		Common\Common.projitems*{2da0145a-032e-4a86-9c9b-b5bebe92d2d9}*SharedItemsImports = 4
 		Common\Common.projitems*{6167a791-dacf-44ed-8b4e-e08af88d565a}*SharedItemsImports = 4
 		Common\Common.projitems*{b9e9edfc-e98a-4370-994f-40a9f39a0284}*SharedItemsImports = 13
@@ -33,6 +36,10 @@ Global
 		{6167A791-DACF-44ED-8B4E-E08AF88D565A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6167A791-DACF-44ED-8B4E-E08AF88D565A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6167A791-DACF-44ED-8B4E-E08AF88D565A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{19C9C6D3-59B4-4E76-B439-298ABEF97AAF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{19C9C6D3-59B4-4E76-B439-298ABEF97AAF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{19C9C6D3-59B4-4E76-B439-298ABEF97AAF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{19C9C6D3-59B4-4E76-B439-298ABEF97AAF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
