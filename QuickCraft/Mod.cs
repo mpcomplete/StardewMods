@@ -45,7 +45,7 @@ namespace mpcomplete.Stardew.QuickCraft
                   Item item = recipe.createItem();
                   if (!Game1.player.couldInventoryAcceptThisItem(item))
                     break;
-                  recipe.consumeIngredients();
+                  recipe.consumeIngredients(new List<StardewValley.Objects.Chest>());
                   Game1.player.addItemToInventory(item);
                   didCraft = true;
                 }

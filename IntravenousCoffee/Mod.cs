@@ -6,6 +6,7 @@ using StardewValley;
 using StardewValley.Menus;
 using PyTK.Types;
 using PyTK.Extensions;
+using PyTK.CustomElementHandler;
 using Pathoschild.Stardew.Common;
 using Microsoft.Xna.Framework;
 
@@ -15,7 +16,7 @@ namespace IntravenousCoffee {
     const int kWithdrawalDurationMillis = 2 * 60 * 60 * 1000; // 2 hours
     const int kBuffWhich = 998;
 
-    internal static EventHandler<MenuChangedEventArgs> addtoshop;
+    //internal static EventHandler<MenuChangedEventArgs> addtoshop;
 
     internal static IModHelper _helper;
     internal static IMonitor _monitor;
@@ -31,15 +32,23 @@ namespace IntravenousCoffee {
       _helper = helper;
       _monitor = Monitor;
 
-      // Add it to the Hospital shop.
-      addtoshop = new InventoryItem(new IntravenousCoffeeTool(), 10000, 1).addToShop(
-          (ShopMenu shop) => shop.getForSale().Exists(
-              (Item item) => item.Name == "Energy Tonic" || item.Name == "Muscle Remedy"
-          )
-      );
-
       Helper.Events.Input.ButtonPressed += this.InputEvents_ButtonPressed;
+      Helper.Events.GameLoop.GameLaunched += OnGameLaunched;
       Helper.Events.GameLoop.OneSecondUpdateTicked += this.GameEvents_UpdateTick;
+      Helper.Events.GameLoop.DayStarted += delegate { addiction = AddictionState.Clean; };
+    }
+
+    private void OnGameLaunched(object sender, GameLaunchedEventArgs e) {
+      IntravenousCoffeeTool tool = new IntravenousCoffeeTool();
+      CustomObjectData.newObject("mpcomplete.IntravenousCoffee.Tool", IntravenousCoffeeTool.texture, Color.White, tool.Name, tool.description, 0, customType: typeof(IntravenousCoffeeTool));
+
+      // Add it to the Hospital shop.
+      new InventoryItem(tool, 10000, 1).addToShop(
+          (ShopMenu shop) => true
+          //(ShopMenu shop) => shop.getForSale().Exists(
+          //    (ISalable item) => item.Name == "Energy Tonic" || item.Name == "Muscle Remedy"
+          //)
+      );
     }
 
     private void InputEvents_ButtonPressed(object sender, ButtonPressedEventArgs e) {
@@ -58,6 +67,9 @@ namespace IntravenousCoffee {
     }
 
     private void GameEvents_UpdateTick(object sender, EventArgs e) {
+      if (!Context.IsWorldReady)
+        return;
+
       removeDrinkBuff(true);
 
       // Wait till the buff runs out.
@@ -94,9 +106,7 @@ namespace IntravenousCoffee {
       buff.millisecondsDuration = millisecondsDuration;
       buff.which = kBuffWhich;
       buff.sheetIndex = 9;
-      if (amount > 0)
-        buff.glow = Color.Azure;
-      else
+      if (amount <= 0)
         buff.glow = Color.Red;
 
       Game1.buffsDisplay.addOtherBuff(buff);

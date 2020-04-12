@@ -11,7 +11,7 @@ using StardewModdingAPI;
 
 namespace IntravenousCoffee
 {
-  public class IntravenousCoffeeTool : Tool, ISaveElement
+  public class IntravenousCoffeeTool : Tool, ISaveElement, ICustomObject
   {
     internal static Texture2D texture;
     private static Texture2D attTexture;
@@ -48,11 +48,15 @@ namespace IntravenousCoffee
       return true;
     }
 
-    public override bool actionWhenPurchased() {
-      return true;
-    }
+    //public override bool actionWhenPurchased() {
+    //  return false;  // use default action
+    //}
 
     public override Item getOne() {
+      return new IntravenousCoffeeTool();
+    }
+
+    public ICustomObject recreate(Dictionary<string, string> additionalSaveData, object replacement) {
       return new IntravenousCoffeeTool();
     }
 
@@ -90,7 +94,7 @@ namespace IntravenousCoffee
       return numAttachmentSlots;
     }
 
-    public override void drawInMenu(SpriteBatch spriteBatch, Vector2 location, float scaleSize, float transparency, float layerDepth, bool drawStackNumber, Color color, bool drawShadow) {
+    public override void drawInMenu(SpriteBatch spriteBatch, Vector2 location, float scaleSize, float transparency, float layerDepth, StackDrawType drawStackNumber, Color color, bool drawShadow) {
       spriteBatch.Draw(
         texture,
         location + new Vector2((float)(Game1.tileSize / 2), (float)(Game1.tileSize / 2)),
